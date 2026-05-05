@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
+import signupHero from "@/assets/signup-hero.jpg";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -35,96 +36,116 @@ export default function SignupPage() {
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Top bar */}
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <PayGrowaLogo size="md" />
-        <button onClick={() => navigate("/login")} className="text-sm font-medium text-primary tap-scale">
-          Sign In
-        </button>
-      </header>
-
-      <main className="flex flex-1 flex-col px-6 pt-8 pb-8">
-        <h1 className="mb-1 text-2xl font-bold text-foreground">Create Account</h1>
-        <p className="mb-6 text-sm text-muted-foreground">Join thousands earning with PayGrowa. It's free and secure.</p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <InputField label="First Name" value={form.firstName} onChange={set("firstName")} placeholder="Chidera" />
-            <InputField label="Last Name" value={form.lastName} onChange={set("lastName")} placeholder="Okonkwo" />
-          </div>
-          <InputField label="Email Address" value={form.email} onChange={set("email")} type="email" placeholder="you@email.com" />
-          <InputField
-            label="Password"
-            value={form.password}
-            onChange={set("password")}
-            type={showPw ? "text" : "password"}
-            placeholder="••••••••"
-            suffix={<button type="button" onClick={() => setShowPw(!showPw)} className="text-muted-foreground">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>}
-          />
-
-          {/* Password checks */}
-          <div className="grid grid-cols-2 gap-1.5 text-xs">
-            {[
-              { key: "length", label: "8+ characters" },
-              { key: "upper", label: "1 uppercase" },
-              { key: "number", label: "1 number" },
-              { key: "symbol", label: "1 symbol" },
-            ].map(({ key, label }) => (
-              <div key={key} className={`flex items-center gap-1 ${pwChecks[key as keyof typeof pwChecks] ? "text-success" : "text-muted-foreground"}`}>
-                <CheckCircle className="h-3 w-3" />
-                {label}
-              </div>
-            ))}
-          </div>
-
-          <InputField
-            label="Confirm Password"
-            value={form.confirmPassword}
-            onChange={set("confirmPassword")}
-            type={showCpw ? "text" : "password"}
-            placeholder="••••••••"
-            suffix={<button type="button" onClick={() => setShowCpw(!showCpw)} className="text-muted-foreground">{showCpw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>}
-          />
-          {form.confirmPassword && !passwordsMatch && (
-            <p className="text-xs text-destructive">Passwords do not match</p>
-          )}
-
-          {/* Terms */}
-          <label className="flex items-start gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-border accent-primary" />
-            <span>I agree to the <span className="text-primary underline">Terms of Service</span> and <span className="text-primary underline">Privacy Policy</span></span>
-          </label>
-
-          <Button type="submit" size="lg" className="w-full" disabled={!formValid}>
-            Create Account
-          </Button>
-        </form>
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <button onClick={() => navigate("/login")} className="font-medium text-primary tap-scale">Log In</button>
-        </p>
-
-        {/* Trust cards */}
-        <div className="mt-8 grid grid-cols-3 gap-3">
-          {[
-            { icon: Lock, title: "Secure Data", desc: "256-bit encryption" },
-            { icon: CheckCircle, title: "Verified Tasks", desc: "Quality-checked" },
-            { icon: Banknote, title: "Fast Payouts", desc: "Within 1 hour" },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card p-3 text-center">
-              <Icon className="h-5 w-5 text-primary" />
-              <span className="text-xs font-semibold text-foreground">{title}</span>
-              <span className="text-[10px] text-muted-foreground">{desc}</span>
-            </div>
-          ))}
+    <div className="flex min-h-screen flex-col bg-background md:flex-row">
+      {/* Left - Image (desktop only, mobile: small banner) */}
+      <div className="relative hidden md:flex md:w-1/2 md:items-center md:justify-center">
+        <img src={signupHero} alt="People using PayGrowa" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-foreground/60" />
+        <div className="relative z-10 px-12 text-center">
+          <PayGrowaLogo size="lg" clickable={false} className="justify-center mb-4" />
+          <p className="text-lg font-semibold text-white">Earn money completing simple tasks</p>
+          <p className="mt-2 text-sm text-white/70">Join 45,000+ active taskers across Nigeria</p>
         </div>
-      </main>
+      </div>
 
-      <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} PayGrowa
-      </footer>
+      {/* Mobile banner */}
+      <div className="relative h-32 md:hidden">
+        <img src={signupHero} alt="People using PayGrowa" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-foreground/60" />
+        <div className="relative z-10 flex h-full items-center justify-center">
+          <PayGrowaLogo size="lg" clickable={true} />
+        </div>
+      </div>
+
+      {/* Right - Form */}
+      <div className="flex flex-1 flex-col md:w-1/2">
+        <header className="hidden md:flex items-center justify-end border-b border-border px-6 py-3">
+          <button onClick={() => navigate("/login")} className="text-sm font-medium text-primary tap-scale">
+            Sign In
+          </button>
+        </header>
+
+        <main className="flex flex-1 flex-col items-center justify-center px-6 py-8">
+          <div className="w-full max-w-md">
+            <h1 className="mb-1 text-2xl font-bold text-foreground">Create Account</h1>
+            <p className="mb-6 text-sm text-muted-foreground">Join thousands earning with PayGrowa. It's free and secure.</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <InputField label="First Name" value={form.firstName} onChange={set("firstName")} placeholder="Chidera" />
+                <InputField label="Last Name" value={form.lastName} onChange={set("lastName")} placeholder="Okonkwo" />
+              </div>
+              <InputField label="Email Address" value={form.email} onChange={set("email")} type="email" placeholder="you@email.com" />
+              <InputField
+                label="Password"
+                value={form.password}
+                onChange={set("password")}
+                type={showPw ? "text" : "password"}
+                placeholder="••••••••"
+                suffix={<button type="button" onClick={() => setShowPw(!showPw)} className="text-muted-foreground">{showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>}
+              />
+
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
+                {[
+                  { key: "length", label: "8+ characters" },
+                  { key: "upper", label: "1 uppercase" },
+                  { key: "number", label: "1 number" },
+                  { key: "symbol", label: "1 symbol" },
+                ].map(({ key, label }) => (
+                  <div key={key} className={`flex items-center gap-1 ${pwChecks[key as keyof typeof pwChecks] ? "text-success" : "text-muted-foreground"}`}>
+                    <CheckCircle className="h-3 w-3" />
+                    {label}
+                  </div>
+                ))}
+              </div>
+
+              <InputField
+                label="Confirm Password"
+                value={form.confirmPassword}
+                onChange={set("confirmPassword")}
+                type={showCpw ? "text" : "password"}
+                placeholder="••••••••"
+                suffix={<button type="button" onClick={() => setShowCpw(!showCpw)} className="text-muted-foreground">{showCpw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>}
+              />
+              {form.confirmPassword && !passwordsMatch && (
+                <p className="text-xs text-destructive">Passwords do not match</p>
+              )}
+
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-border accent-primary" />
+                <span>I agree to the <span className="text-primary underline">Terms of Service</span> and <span className="text-primary underline">Privacy Policy</span></span>
+              </label>
+
+              <Button type="submit" size="lg" className="w-full" disabled={!formValid}>
+                Create Account
+              </Button>
+            </form>
+
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <button onClick={() => navigate("/login")} className="font-medium text-primary tap-scale">Log In</button>
+            </p>
+
+            <div className="mt-8 grid grid-cols-3 gap-3">
+              {[
+                { icon: Lock, title: "Secure Data", desc: "256-bit encryption" },
+                { icon: CheckCircle, title: "Verified Tasks", desc: "Quality-checked" },
+                { icon: Banknote, title: "Fast Payouts", desc: "Within 1 hour" },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card p-3 text-center">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <span className="text-xs font-semibold text-foreground">{title}</span>
+                  <span className="text-[10px] text-muted-foreground">{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+
+        <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} PayGrowa
+        </footer>
+      </div>
     </div>
   );
 }
