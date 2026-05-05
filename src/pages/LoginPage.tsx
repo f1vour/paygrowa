@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Shield, Eye, EyeOff, Lock } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
+import PayGrowaLogo from "@/components/PayGrowaLogo";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -22,9 +23,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-6 pt-16 pb-8">
-      <div className="mb-8 flex items-center gap-2">
-        <Shield className="h-7 w-7 text-primary" />
-        <span className="text-2xl font-bold text-foreground">PayGrowa</span>
+      <div className="mb-8">
+        <PayGrowaLogo size="lg" />
       </div>
 
       <h1 className="mb-1 text-2xl font-bold text-foreground">Welcome back</h1>

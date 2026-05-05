@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { Shield, Lock, CheckCircle, Banknote, Eye, EyeOff } from "lucide-react";
+import { Lock, CheckCircle, Banknote, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
+import PayGrowaLogo from "@/components/PayGrowaLogo";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -37,10 +38,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen flex-col bg-background">
       {/* Top bar */}
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          <span className="text-lg font-bold text-foreground">PayGrowa</span>
-        </div>
+        <PayGrowaLogo size="md" />
         <button onClick={() => navigate("/login")} className="text-sm font-medium text-primary tap-scale">
           Sign In
         </button>
