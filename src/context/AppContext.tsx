@@ -4,8 +4,27 @@ export interface Transaction {
   id: string;
   title: string;
   amount: number;
-  status: "earned" | "verifying" | "paid";
+  type: "task" | "savings" | "withdrawal";
+  status: "earning" | "verifying" | "paid" | "completed";
   date: string;
+  bankName?: string;
+  goalName?: string;
+  verifyAt?: number; // timestamp when verification completes
+}
+
+export interface SavingsGoal {
+  id: string;
+  name: string;
+  category: string;
+  targetAmount: number;
+  savedAmount: number;
+  timeframe: "weekly" | "monthly" | null;
+}
+
+export interface BankDetails {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
 }
 
 interface AppState {
@@ -18,6 +37,8 @@ interface AppState {
   transactions: Transaction[];
   profileCompleted: boolean;
   profile: { gender: string; dob: string; state: string } | null;
+  savingsGoals: SavingsGoal[];
+  bankDetails: BankDetails | null;
 }
 
 interface AppContextType extends AppState {
@@ -28,9 +49,16 @@ interface AppContextType extends AppState {
   setSavingsPreference: (pct: number | null) => void;
   completeProfile: (gender: string, dob: string, state: string) => void;
   withdraw: (amount: number) => void;
+  addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "savedAmount">) => void;
+  editSavingsGoal: (id: string, updates: Partial<SavingsGoal>) => void;
+  addMoneyToGoal: (goalId: string, amount: number) => void;
+  setBankDetails: (details: BankDetails) => void;
+  processVerifications: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
+
+const VERIFY_DURATION = 20 * 60 * 1000; // 20 minutes
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>({
@@ -43,6 +71,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     transactions: [],
     profileCompleted: false,
     profile: null,
+    savingsGoals: [],
+    bankDetails: null,
   });
 
   const login = useCallback((email: string) => {
@@ -59,20 +89,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const completeTask = useCallback((title: string, amount: number) => {
     setState((s) => {
-      const savingsDeduction = s.savingsPercentage ? (amount * s.savingsPercentage) / 100 : 0;
       const tx: Transaction = {
         id: Date.now().toString(),
         title,
         amount,
+        type: "task",
         status: "verifying",
         date: new Date().toLocaleDateString("en-NG"),
+        verifyAt: Date.now() + VERIFY_DURATION,
       };
       return {
         ...s,
-        walletBalance: s.walletBalance + amount - savingsDeduction,
-        savingsBalance: s.savingsBalance + savingsDeduction,
         trustScore: s.trustScore + 5,
         transactions: [tx, ...s.transactions],
+      };
+    });
+  }, []);
+
+  const processVerifications = useCallback(() => {
+    setState((s) => {
+      const now = Date.now();
+      let balanceAdd = 0;
+      let savingsAdd = 0;
+      const updatedTx = s.transactions.map((tx) => {
+        if (tx.status === "verifying" && tx.verifyAt && now >= tx.verifyAt) {
+          const savingsDeduction = s.savingsPercentage ? (tx.amount * s.savingsPercentage) / 100 : 0;
+          balanceAdd += tx.amount - savingsDeduction;
+          savingsAdd += savingsDeduction;
+          return { ...tx, status: "paid" as const };
+        }
+        return tx;
+      });
+      if (balanceAdd === 0 && savingsAdd === 0) return s;
+      return {
+        ...s,
+        walletBalance: s.walletBalance + balanceAdd,
+        savingsBalance: s.savingsBalance + savingsAdd,
+        transactions: updatedTx,
       };
     });
   }, []);
@@ -90,14 +143,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       walletBalance: Math.max(0, s.walletBalance - amount),
       transactions: [
-        { id: Date.now().toString(), title: "Withdrawal", amount: -amount, status: "verifying", date: new Date().toLocaleDateString("en-NG") },
+        { id: Date.now().toString(), title: "Withdrawal", amount: -amount, type: "withdrawal", status: "completed", date: new Date().toLocaleDateString("en-NG"), bankName: s.bankDetails?.bankName },
         ...s.transactions,
       ],
     }));
   }, []);
 
+  const addSavingsGoal = useCallback((goal: Omit<SavingsGoal, "id" | "savedAmount">) => {
+    setState((s) => ({
+      ...s,
+      savingsGoals: [...s.savingsGoals, { ...goal, id: Date.now().toString(), savedAmount: 0 }],
+    }));
+  }, []);
+
+  const editSavingsGoal = useCallback((id: string, updates: Partial<SavingsGoal>) => {
+    setState((s) => ({
+      ...s,
+      savingsGoals: s.savingsGoals.map((g) => g.id === id ? { ...g, ...updates } : g),
+    }));
+  }, []);
+
+  const addMoneyToGoal = useCallback((goalId: string, amount: number) => {
+    setState((s) => {
+      if (s.walletBalance < amount) return s;
+      const tx: Transaction = {
+        id: Date.now().toString(),
+        title: "Moved to Savings",
+        amount: -amount,
+        type: "savings",
+        status: "completed",
+        date: new Date().toLocaleDateString("en-NG"),
+        goalName: s.savingsGoals.find((g) => g.id === goalId)?.name,
+      };
+      return {
+        ...s,
+        walletBalance: s.walletBalance - amount,
+        savingsBalance: s.savingsBalance + amount,
+        savingsGoals: s.savingsGoals.map((g) => g.id === goalId ? { ...g, savedAmount: g.savedAmount + amount } : g),
+        transactions: [tx, ...s.transactions],
+      };
+    });
+  }, []);
+
+  const setBankDetails = useCallback((details: BankDetails) => {
+    setState((s) => ({ ...s, bankDetails: details }));
+  }, []);
+
   return (
-    <AppContext.Provider value={{ ...state, login, signup, logout, completeTask, setSavingsPreference, completeProfile, withdraw }}>
+    <AppContext.Provider value={{
+      ...state, login, signup, logout, completeTask, setSavingsPreference,
+      completeProfile, withdraw, addSavingsGoal, editSavingsGoal, addMoneyToGoal,
+      setBankDetails, processVerifications,
+    }}>
       {children}
     </AppContext.Provider>
   );

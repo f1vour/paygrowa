@@ -25,8 +25,7 @@ export default function PayGrowaLogo({ className = "", size = "md", clickable = 
 
   const content = (
     <span className={`inline-flex items-baseline font-extrabold tracking-tight ${sizeClasses[size]} ${className}`}>
-      <span className="text-primary">Pay</span>
-      <span className="text-secondary">Grow</span>
+      <span className="text-primary">P</span>
       <svg
         width={w}
         height={h}
@@ -41,7 +40,7 @@ export default function PayGrowaLogo({ className = "", size = "md", clickable = 
         <path
           d="M8 1L15 14H1L8 1Z"
           fill="none"
-          stroke="hsl(var(--secondary))"
+          stroke="hsl(var(--primary))"
           strokeWidth="2.2"
           strokeLinejoin="round"
         />
@@ -51,11 +50,13 @@ export default function PayGrowaLogo({ className = "", size = "md", clickable = 
           y1={14 + bar}
           x2="13"
           y2={14 + bar}
-          stroke="hsl(var(--secondary))"
+          stroke="hsl(var(--primary))"
           strokeWidth="2"
           strokeLinecap="round"
         />
       </svg>
+      <span className="text-primary">y</span>
+      <span className="text-secondary">Growa</span>
     </span>
   );
 

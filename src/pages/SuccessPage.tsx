@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle, Wallet, TrendingUp, Loader2 } from "lucide-react";
+import { CheckCircle, Wallet, TrendingUp, Loader2, Clock } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export default function SuccessPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { completeTask, walletBalance, trustScore, savingsPercentage } = useApp();
+  const { completeTask, trustScore, savingsPercentage } = useApp();
   const { taskTitle, reward } = (location.state as { taskTitle: string; reward: number }) || { taskTitle: "Survey", reward: 1000 };
   const [credited, setCredited] = useState(false);
   const [showSavingsModal, setShowSavingsModal] = useState(false);
@@ -18,9 +18,8 @@ export default function SuccessPage() {
       completeTask(taskTitle, reward);
       setCredited(true);
       setTimeout(() => {
-        toast.success("Task Verified", { description: `₦${reward.toLocaleString()} added to your wallet` });
+        toast.success("Task Submitted", { description: `₦${reward.toLocaleString()} is being verified (approx. 20 minutes)` });
       }, 500);
-      // Show savings modal if no preference set
       if (savingsPercentage === null) {
         setTimeout(() => setShowSavingsModal(true), 1500);
       }
@@ -34,7 +33,6 @@ export default function SuccessPage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center px-6 pt-12 pb-8 space-y-6">
-        {/* Success hero */}
         <div className="relative">
           <div className="h-24 w-24 rounded-full bg-secondary/20 flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
@@ -45,14 +43,14 @@ export default function SuccessPage() {
 
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-foreground">You earned ₦{reward.toLocaleString()}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Your payment is being processed — you will receive it within 1 hour</p>
+          <p className="mt-2 text-sm text-muted-foreground">Processing (approx. 20 minutes) — your wallet will update once verified</p>
         </div>
 
         {/* Status tracker */}
         <div className="w-full max-w-xs space-y-0">
           {[
             { label: "Earned", status: "done" as const, sub: "Done" },
-            { label: "Verifying", status: "active" as const, sub: "In progress" },
+            { label: "Verifying (20 minutes)", status: "active" as const, sub: "In progress" },
             { label: "Paid", status: "pending" as const, sub: "Pending" },
           ].map(({ label, status, sub }, i) => (
             <div key={label} className="flex gap-3">
@@ -74,12 +72,11 @@ export default function SuccessPage() {
           ))}
         </div>
 
-        {/* Info cards */}
         <div className="grid w-full max-w-sm grid-cols-2 gap-3">
           <div className="rounded-xl border border-border bg-card p-4">
-            <Wallet className="mb-2 h-5 w-5 text-primary" />
-            <p className="text-xs text-muted-foreground">New Balance</p>
-            <p className="text-lg font-bold text-foreground">₦{walletBalance.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
+            <Clock className="mb-2 h-5 w-5 text-warning" />
+            <p className="text-xs text-muted-foreground">Status</p>
+            <p className="text-sm font-bold text-foreground">Verifying</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
             <TrendingUp className="mb-2 h-5 w-5 text-success" />
@@ -93,7 +90,6 @@ export default function SuccessPage() {
         </Button>
       </main>
 
-      {/* Savings Modal */}
       {showSavingsModal && <SavingsNudgeModal onClose={() => setShowSavingsModal(false)} reward={reward} />}
     </div>
   );
@@ -116,7 +112,6 @@ function SavingsNudgeModal({ onClose, reward }: { onClose: () => void; reward: n
           <h2 className="mt-2 text-lg font-bold text-foreground">You earned ₦{reward.toLocaleString()}!</h2>
           <p className="mt-1 text-sm text-muted-foreground">Start building an emergency fund with small savings.</p>
         </div>
-
         <div className="space-y-3">
           <button onClick={() => handleSelect(5)} className="flex w-full items-center justify-between rounded-xl border border-border bg-background p-4 tap-scale hover:border-primary/30">
             <span className="text-sm font-medium text-foreground">Save 5%</span>
@@ -130,7 +125,6 @@ function SavingsNudgeModal({ onClose, reward }: { onClose: () => void; reward: n
             Skip for now
           </button>
         </div>
-
         <p className="text-center text-[10px] text-muted-foreground">You can change this anytime</p>
       </div>
     </div>

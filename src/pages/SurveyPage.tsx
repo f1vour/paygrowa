@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 interface Question {
   id: number;
   text: string;
-  type: "single" | "multiple" | "text" | "attention";
+  type: "single" | "text" | "attention";
   options?: string[];
-  correctAnswer?: string; // for attention check
+  correctAnswer?: string;
 }
 
 const questions: Question[] = [
@@ -21,7 +21,7 @@ const questions: Question[] = [
   {
     id: 2,
     text: "What is your average daily spending?",
-    type: "multiple",
+    type: "single",
     options: ["₦0 – ₦500", "₦500 – ₦1,000", "₦1,000 – ₦2,000", "₦2,000+"],
   },
   {
@@ -33,8 +33,8 @@ const questions: Question[] = [
   {
     id: 4,
     text: "What do you spend the most on?",
-    type: "multiple",
-    options: ["Food & Drinks", "Transportation", "Data & Airtime", "Entertainment", "Savings"],
+    type: "single",
+    options: ["Food & Drinks", "Transportation", "Data & Airtime", "Entertainment"],
   },
   {
     id: 5,
@@ -43,10 +43,10 @@ const questions: Question[] = [
   },
   {
     id: 6,
-    text: "Which of these activities do you do most often in a week?",
+    text: "Which of the following is NOT a common daily expense for students?",
     type: "attention",
-    options: ["Watching movies", "Exercising", "Reading books", "Eating breakfast"],
-    correctAnswer: "Eating breakfast",
+    options: ["Food", "Transport", "Data", "Airplane ticket"],
+    correctAnswer: "Airplane ticket",
   },
 ];
 
@@ -54,7 +54,7 @@ export default function SurveyPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
+  const [answers, setAnswers] = useState<Record<number, string>>({});
   const [showQualityAlert, setShowQualityAlert] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const startTimeRef = useRef(Date.now());
@@ -64,28 +64,19 @@ export default function SurveyPage() {
   const progress = ((step + 1) / total) * 100;
 
   const currentAnswer = answers[q.id];
-  const hasAnswer = q.type === "text" ? typeof currentAnswer === "string" && currentAnswer.trim().length > 10 : currentAnswer && (Array.isArray(currentAnswer) ? currentAnswer.length > 0 : true);
+  const hasAnswer = q.type === "text" ? typeof currentAnswer === "string" && currentAnswer.trim().length > 10 : !!currentAnswer;
 
   const handleSelect = (option: string) => {
-    if (q.type === "single" || q.type === "attention") {
-      setAnswers((a) => ({ ...a, [q.id]: option }));
-    } else if (q.type === "multiple") {
-      setAnswers((a) => {
-        const prev = (a[q.id] as string[]) || [];
-        return { ...a, [q.id]: prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option] };
-      });
-    }
+    setAnswers((a) => ({ ...a, [q.id]: option }));
   };
 
   const handleNext = () => {
-    // Attention check
     if (q.type === "attention" && currentAnswer !== q.correctAnswer) {
       setShowQualityAlert(true);
       return;
     }
 
     if (step === total - 1) {
-      // Time check
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       if (elapsed < 30) {
         setShowQualityAlert(true);
@@ -103,7 +94,6 @@ export default function SurveyPage() {
     navigate("/success", { state: { taskTitle: "Student Spending Habits Survey", reward: rewards[taskId] || 1000 } });
   };
 
-  // Quality Alert Screen
   if (showQualityAlert) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -142,7 +132,6 @@ export default function SurveyPage() {
     );
   }
 
-  // Confirmation modal
   if (showConfirmation) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm px-6">
@@ -162,7 +151,6 @@ export default function SurveyPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Top bar */}
       <header className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-card/95 px-4 py-3 backdrop-blur-md">
         <button onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)} className="tap-scale">
           <ArrowLeft className="h-5 w-5 text-foreground" />
@@ -171,7 +159,6 @@ export default function SurveyPage() {
         <MoreVertical className="h-5 w-5 text-muted-foreground" />
       </header>
 
-      {/* Progress */}
       <div className="px-4 pt-4 space-y-1">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Step {step + 1} of {total}</span>
@@ -183,7 +170,6 @@ export default function SurveyPage() {
       </div>
 
       <main className="flex-1 px-4 pt-6 pb-24 space-y-4">
-        {/* Attention check alert */}
         {isAttention && (
           <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
             <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
@@ -194,13 +180,10 @@ export default function SurveyPage() {
         <h2 className="text-lg font-bold text-foreground">{q.text}</h2>
         {q.type === "text" && <p className="text-xs text-muted-foreground">Please provide a detailed response (at least 10 characters).</p>}
 
-        {/* Options */}
-        {(q.type === "single" || q.type === "multiple" || q.type === "attention") && q.options && (
+        {(q.type === "single" || q.type === "attention") && q.options && (
           <div className="space-y-3">
             {q.options.map((option) => {
-              const selected = q.type === "multiple"
-                ? (currentAnswer as string[] | undefined)?.includes(option)
-                : currentAnswer === option;
+              const selected = currentAnswer === option;
               return (
                 <button
                   key={option}
@@ -223,7 +206,7 @@ export default function SurveyPage() {
 
         {q.type === "text" && (
           <textarea
-            value={(currentAnswer as string) || ""}
+            value={currentAnswer || ""}
             onChange={(e) => setAnswers((a) => ({ ...a, [q.id]: e.target.value }))}
             placeholder="Type your answer here..."
             rows={5}
@@ -232,7 +215,6 @@ export default function SurveyPage() {
         )}
       </main>
 
-      {/* Sticky CTA */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-md">
         <Button size="lg" className="w-full" disabled={!hasAnswer} onClick={handleNext}>
           {step === total - 1 ? "Submit" : "Next"}

@@ -1,4 +1,4 @@
-import { Clock, Zap, Banknote, CheckCircle, ArrowRight, Users, TrendingUp } from "lucide-react";
+import { CheckCircle, ClipboardCheck, CreditCard, Shield, Building2, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
@@ -9,178 +9,196 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Top bar */}
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <PayGrowaLogo size="md" />
-        <button onClick={() => navigate("/login")} className="text-sm font-medium text-primary tap-scale">
-          Log In
-        </button>
+      {/* Navigation */}
+      <header className="border-b border-border px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between">
+          <PayGrowaLogo size="md" />
+          <nav className="hidden items-center gap-6 md:flex">
+            <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer">About Us</span>
+            <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer">Contact Us</span>
+            <button onClick={() => navigate("/login")} className="text-sm text-muted-foreground hover:text-foreground">Login</button>
+            <Button size="sm" onClick={() => navigate("/signup")}>Join Now</Button>
+          </nav>
+          <div className="flex items-center gap-3 md:hidden">
+            <button onClick={() => navigate("/login")} className="text-sm font-medium text-primary tap-scale">Login</button>
+            <Button size="sm" onClick={() => navigate("/signup")}>Join Now</Button>
+          </div>
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col">
-        {/* Hero section with image background — matching reference */}
-        <section className="relative px-6 pt-8 pb-6">
-          {/* Badge */}
-          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            Now Live in Emerging Markets
-          </div>
-
-          <h1 className="mb-3 text-3xl font-extrabold leading-tight text-foreground sm:text-4xl">
-            Earn money by completing simple tasks
-          </h1>
-          <p className="mb-6 max-w-sm text-base text-muted-foreground">
-            Turn your spare time into extra income. Join thousands of users to complete micro-tasks and get paid directly to your local accounts.
-          </p>
-
-          <div className="flex w-full max-w-sm flex-col gap-3 mb-6">
-            <Button size="xl" variant="hero" className="w-full" onClick={() => navigate("/signup")}>
-              Get Started
-            </Button>
-            <Button size="lg" variant="hero-outline" className="w-full" onClick={() => navigate("/signup")}>
-              Learn More
-            </Button>
-          </div>
-
-          {/* Hero image with overlay card */}
-          <div className="relative w-full overflow-hidden rounded-2xl">
-            <img
-              src={heroPhone}
-              alt="Person earning money on their smartphone with PayGrowa"
-              className="w-full h-56 object-cover"
-              width={768}
-              height={896}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 to-transparent" />
-            {/* Floating earnings card */}
-            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-lg bg-card/95 backdrop-blur-sm px-3 py-2 shadow-sm">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-success/20">
-                <CheckCircle className="h-4 w-4 text-success" />
+        {/* Hero Section - desktop: side by side, mobile: stacked */}
+        <section className="px-6 py-12 md:py-20">
+          <div className="mx-auto flex max-w-6xl flex-col gap-8 md:flex-row md:items-center md:gap-12">
+            {/* Left text */}
+            <div className="flex-1">
+              <h1 className="mb-4 text-3xl font-extrabold leading-tight text-foreground md:text-5xl">
+                Earn money by completing simple tasks
+              </h1>
+              <p className="mb-8 max-w-lg text-base text-muted-foreground md:text-lg">
+                Join thousands of Nigerians turning their spare time into consistent digital earnings. Fast payments, verified tasks, and absolute transparency.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button size="lg" variant="hero" onClick={() => navigate("/signup")}>Get Started</Button>
+                <Button size="lg" variant="outline" onClick={() => navigate("/signup")}>Learn More</Button>
               </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Last Task Paid</p>
-                <p className="text-sm font-bold text-success">₦2,500.00</p>
+            </div>
+            {/* Right image */}
+            <div className="relative flex-1 max-w-lg">
+              <div className="overflow-hidden rounded-2xl">
+                <img
+                  src={heroPhone}
+                  alt="Person earning money on their smartphone with PayGrowa"
+                  className="w-full h-auto object-cover"
+                  width={768}
+                  height={512}
+                />
+              </div>
+              {/* Floating card */}
+              <div className="absolute -bottom-4 left-4 flex items-center gap-2.5 rounded-xl bg-card shadow-lg px-4 py-3 border border-border md:left-8">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/20">
+                  <CheckCircle className="h-4 w-4 text-success" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Last Task Paid</p>
+                  <p className="text-sm font-bold text-foreground">₦4,500.00</p>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Stats row */}
-        <section className="border-y border-border px-6 py-6">
-          <div className="flex flex-col items-center gap-4">
+        {/* Stats Bar */}
+        <section className="bg-primary px-6 py-6">
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 sm:flex-row sm:justify-around">
             {[
-              { value: "₦2.5M+", label: "PAID OUT TO USERS" },
+              { value: "₦12.5M+", label: "PAID OUT" },
               { value: "45,000+", label: "ACTIVE TASKERS" },
               { value: "98.2%", label: "SUCCESS RATE" },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
-                <p className="text-xl font-extrabold text-foreground">{value}</p>
-                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-xl font-extrabold text-primary-foreground md:text-2xl">{value}</p>
+                <p className="text-xs text-primary-foreground/70">{label}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* How it works */}
-        <section className="px-6 py-8">
-          <h2 className="mb-2 text-xl font-bold text-foreground text-center">Start earning in minutes</h2>
-          <p className="mb-8 text-sm text-muted-foreground text-center">
-            No complex skills required. Just a smartphone, an internet connection, and your time.
-          </p>
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="mb-2 text-2xl font-bold text-foreground text-center">Start earning in minutes</h2>
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-secondary" />
+            <p className="mb-12 text-sm text-muted-foreground text-center max-w-md mx-auto">
+              No complex skills required. Just a smartphone, an internet connection, and your time.
+            </p>
 
-          <div className="space-y-6">
-            {[
-              { icon: Zap, title: "Choose a task", desc: "Browse hundreds of available micro-tasks ranging from surveys to content moderation." },
-              { icon: Clock, title: "Complete it", desc: "Follow simple instructions to finish the task. Most tasks take less than 5 minutes to complete." },
-              { icon: Banknote, title: "Get paid", desc: "Once verified, funds are instantly credited to your PayGrowa wallet for withdrawal." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex flex-col items-center text-center">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  <Icon className="h-6 w-6 text-primary" />
+            <div className="grid gap-8 sm:grid-cols-3">
+              {[
+                { icon: ClipboardCheck, title: "Choose a task", desc: "Browse through hundreds of available micro-tasks ranging from surveys to app testing." },
+                { icon: CheckCircle, title: "Complete it", desc: "Follow the simple instructions provided for each task and submit your proof for review." },
+                { icon: CreditCard, title: "Get paid", desc: "Once verified, your earnings are credited instantly to your digital wallet for withdrawal." },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="rounded-2xl border border-border bg-card p-6 text-left">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-border">
+                    <Icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="mb-2 text-sm font-bold text-foreground">{title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
                 </div>
-                <h3 className="mb-1 text-sm font-bold text-foreground">{title}</h3>
-                <p className="text-xs text-muted-foreground max-w-xs">{desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Trust / Community section */}
-        <section className="bg-primary/5 px-6 py-8">
-          <h2 className="mb-2 text-lg font-bold text-foreground">Real earnings, real impact</h2>
-          <p className="mb-5 text-sm text-muted-foreground">
-            Join our community of earners who are building a better future, one task at a time. Secure, verified, and always on time.
-          </p>
-
-          <div className="space-y-3 mb-6">
-            {[
-              "Enterprise-grade security for all transactions",
-              "Direct bank transfers to local banks",
-              "Transparent task verification process",
-            ].map((text) => (
-              <div key={text} className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 shrink-0 text-success" />
-                <span className="text-xs text-foreground">{text}</span>
+        {/* Real earnings section */}
+        <section className="bg-muted/50 px-6 py-16">
+          <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-start">
+            {/* Left */}
+            <div className="flex-1">
+              <h2 className="mb-6 text-2xl font-bold text-foreground">Real earnings, real impact</h2>
+              <div className="space-y-5">
+                {[
+                  { icon: Shield, title: "Institutional Security", desc: "Your data and funds are protected by bank-grade encryption and secure authentication." },
+                  { icon: Building2, title: "Direct bank transfers", desc: "Withdraw your hard-earned money directly to any Nigerian bank account in minutes." },
+                  { icon: Search, title: "Transparent verification", desc: "Real-time tracking of task approval status with clear feedback on every submission." },
+                ].map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{title}</p>
+                      <p className="text-xs text-muted-foreground">{desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-
-          {/* Earnings cards grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { name: "John D.", amount: "₦1,200.00" },
-              { name: "Musa A.", amount: "₦800.00" },
-              { name: "Sarah K.", amount: "₦4,500.00" },
-              { name: "Grace O.", amount: "₦2,100.00" },
-            ].map(({ name, amount }) => (
-              <div key={name} className="rounded-xl border border-border bg-card p-3">
-                <p className="text-xs text-muted-foreground">{name} just earned</p>
-                <p className="text-sm font-bold text-success">{amount}</p>
-              </div>
-            ))}
+            </div>
+            {/* Right - earner cards grid */}
+            <div className="grid flex-1 grid-cols-2 gap-3">
+              {[
+                { name: "John D.", initials: "JD", amount: "₦12,400", color: "bg-primary" },
+                { name: "Musa A.", initials: "MA", amount: "₦8,200", color: "bg-secondary" },
+                { name: "Sarah K.", initials: "SK", amount: "₦15,800", color: "bg-tertiary" },
+                { name: "Grace O.", initials: "GO", amount: "₦5,600", color: "bg-primary" },
+              ].map(({ name, initials, amount, color }) => (
+                <div key={name} className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`flex h-7 w-7 items-center justify-center rounded-full ${color} text-[10px] font-bold text-white`}>{initials}</div>
+                    <span className="text-xs font-medium text-foreground">{name}</span>
+                  </div>
+                  <p className="text-lg font-bold text-secondary">{amount}</p>
+                  <p className="text-[10px] text-muted-foreground">Earned this week</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* CTA section */}
-        <section className="px-6 py-8 text-center">
-          <h2 className="mb-2 text-lg font-bold text-foreground">Ready to start earning?</h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Create your free account today and browse thousands of available tasks. Your first payout could be minutes away.
-          </p>
-          <Button size="xl" variant="hero" className="w-full max-w-sm" onClick={() => navigate("/signup")}>
-            Create Free Account
-          </Button>
+        {/* CTA Section */}
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-2xl rounded-2xl bg-primary p-10 text-center">
+            <h2 className="mb-3 text-2xl font-bold text-primary-foreground md:text-3xl">Ready to start earning?</h2>
+            <p className="mb-6 text-sm text-primary-foreground/80">
+              Join the 45,000+ active taskers today. Registration takes less than 2 minutes.
+            </p>
+            <Button size="xl" variant="secondary" className="rounded-full px-10" onClick={() => navigate("/signup")}>
+              Create Free Account
+            </Button>
+          </div>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border px-6 py-6">
-        <div className="mb-4">
-          <PayGrowaLogo size="md" />
-        </div>
-        <p className="mb-4 text-xs text-muted-foreground">
-          The leading platform for micro-tasking in emerging markets. We bridge the gap between global digital labor and local talent.
-        </p>
-        <div className="grid grid-cols-2 gap-4 mb-6 text-xs">
+      <footer className="border-t border-border bg-muted/30 px-6 py-10">
+        <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-4">
           <div>
-            <p className="font-semibold text-foreground mb-2">COMPANY</p>
-            <div className="space-y-1.5 text-muted-foreground">
-              <p>About Us</p>
-              <p>Contact Us</p>
-              <p>Careers</p>
-            </div>
+            <PayGrowaLogo size="md" />
+            <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+              Empowering the next generation of digital earners across Nigeria with reliable, safe micro-tasks.
+            </p>
           </div>
-          <div>
-            <p className="font-semibold text-foreground mb-2">LEGAL</p>
-            <div className="space-y-1.5 text-muted-foreground">
-              <p>Privacy Policy</p>
-              <p>Terms of Service</p>
-              <p>Cookie Policy</p>
+          {[
+            { title: "COMPANY", items: ["About Us", "Careers", "Our Blog", "Newsroom"] },
+            { title: "LEGAL", items: ["Privacy Policy", "Terms of Service", "Security Policy", "Cookie Settings"] },
+            { title: "SUPPORT", items: ["Help Center", "Contact Support", "Safety Guidelines", "System Status"] },
+          ].map(({ title, items }) => (
+            <div key={title}>
+              <p className="mb-3 text-xs font-semibold text-foreground">{title}</p>
+              <div className="space-y-2 text-xs text-muted-foreground">
+                {items.map((item) => <p key={item} className="hover:text-foreground cursor-pointer">{item}</p>)}
+              </div>
             </div>
+          ))}
+        </div>
+        <div className="mx-auto mt-8 flex max-w-6xl items-center justify-between border-t border-border pt-6">
+          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} PayGrowa Technologies Ltd. All rights reserved.</p>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <Shield className="h-3 w-3 text-success" />
+            Secured by PayGrowa Shield™
           </div>
         </div>
-        <p className="text-[10px] text-muted-foreground text-center">
-          © {new Date().getFullYear()} PayGrowa Technologies. All rights reserved.
-        </p>
       </footer>
     </div>
   );
