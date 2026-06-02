@@ -58,7 +58,7 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const VERIFY_DURATION = 20 * 60 * 1000; // 20 minutes
+const VERIFY_DURATION = 60 * 1000; // 1 minute (per current PayGrowa rule)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>({
