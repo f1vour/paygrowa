@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
+import { isAdminEmail } from "@/lib/adminAllowlist";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -17,8 +18,9 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!valid) return;
-    login(email.trim());
-    navigate("/dashboard");
+    const trimmed = email.trim();
+    login(trimmed);
+    navigate(isAdminEmail(trimmed) ? "/admin/dashboard" : "/dashboard");
   };
 
   return (
