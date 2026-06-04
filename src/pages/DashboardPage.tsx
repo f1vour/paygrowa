@@ -1,4 +1,4 @@
-import { Wallet, Clock, ArrowRight, UserCheck, ShieldCheck } from "lucide-react";
+import { Wallet, Clock, ArrowRight, UserCheck, ShieldCheck, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
@@ -9,6 +9,11 @@ const tasks = [
   { id: "1", title: "Student Spending Habits Survey", time: "10 mins", reward: 1000, verified: true },
   { id: "2", title: "Social Media Usage Survey", time: "5 mins", reward: 500, verified: true },
   { id: "3", title: "Daily Routine & Lifestyle Survey", time: "8 mins", reward: 800, verified: true },
+];
+
+const communityTasks = [
+  { id: "c1", title: "Report a Road Condition", time: "5 mins", reward: 1500 },
+  { id: "c2", title: "Capture Environmental Conditions", time: "5 mins", reward: 1200 },
 ];
 
 export default function DashboardPage() {
@@ -81,6 +86,31 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <Button size="sm" onClick={() => navigate(`/task/${task.id}`)} className="tap-scale">
+                  Start Task
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Local Community Reporting */}
+        <div>
+          <div className="mb-3 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Local Community Reporting</h3>
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">Earn by completing simple real-world reporting tasks near you.</p>
+          <div className="space-y-3">
+            {communityTasks.map((task) => (
+              <div key={task.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">{task.title}</p>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{task.time}</span>
+                    <span className="font-semibold text-success">₦{task.reward.toLocaleString()}</span>
+                  </div>
+                </div>
+                <Button size="sm" onClick={() => navigate(`/community/${task.id}`)} className="tap-scale">
                   Start Task
                 </Button>
               </div>

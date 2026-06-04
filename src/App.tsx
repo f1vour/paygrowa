@@ -18,6 +18,8 @@ import SavingsPage from "./pages/SavingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProfileSetupPage from "./pages/ProfileSetupPage";
 import NotFound from "./pages/NotFound";
+import AppShell from "./components/AppShell";
+import CommunityTaskPage from "./pages/CommunityTaskPage";
 
 import AdminProtected from "./components/admin/AdminProtected";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -43,15 +45,19 @@ const App = () => (
               <Route path="/" element={<HomePage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/task/:id" element={<TaskDetailPage />} />
-              <Route path="/survey/:id" element={<SurveyPage />} />
-              <Route path="/success" element={<SuccessPage />} />
-              <Route path="/wallet" element={<WalletPage />} />
-              <Route path="/withdraw" element={<WithdrawPage />} />
-              <Route path="/savings" element={<SavingsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/profile-setup" element={<ProfileSetupPage />} />
+              <Route element={<AppShell />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/task/:id" element={<TaskDetailPage />} />
+                <Route path="/community/:id" element={<CommunityTaskPage />} />
+                <Route path="/survey/:id" element={<SurveyPage />} />
+                <Route path="/success" element={<SuccessPage />} />
+                <Route path="/wallet" element={<WalletPage />} />
+                <Route path="/withdraw" element={<WithdrawPage />} />
+                <Route path="/savings" element={<SavingsPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile-setup" element={<ProfileSetupPage />} />
+              </Route>
+
 
               {/* Admin Panel (allowlist-gated) */}
               <Route
