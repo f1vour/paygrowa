@@ -7,6 +7,7 @@ import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { isAdminEmail } from "@/lib/adminAllowlist";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
+import GoogleIcon from "@/components/GoogleIcon";
 
 export default function LoginPage() {
   const navigate = useNavigate();
