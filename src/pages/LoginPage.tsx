@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { isAdminEmail } from "@/lib/adminAllowlist";
+import { lovable } from "@/integrations/lovable";
+import { toast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -67,13 +69,24 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="my-5 flex items-center gap-3">
+        <div className="my-4 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs text-muted-foreground">OR</span>
           <div className="h-px flex-1 bg-border" />
         </div>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <button
+          type="button"
+          onClick={async () => {
+            const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
+            if (res.error) toast({ title: "Google sign-in failed", description: res.error.message, variant: "destructive" });
+          }}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-input bg-background text-sm font-medium text-foreground hover:bg-muted tap-scale"
+        >
+          <GoogleIcon /> Continue with Google
+        </button>
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <button onClick={() => navigate("/signup")} className="font-medium text-primary tap-scale">Register now</button>
         </p>
