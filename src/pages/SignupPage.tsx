@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import signupHero from "@/assets/signup-hero.jpg";
+import { lovable } from "@/integrations/lovable";
+import { toast } from "@/hooks/use-toast";
+import GoogleIcon from "@/components/GoogleIcon";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -120,6 +123,23 @@ export default function SignupPage() {
                 Create Account
               </Button>
             </form>
+
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">OR</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
+                if (res.error) toast({ title: "Google sign-up failed", description: res.error.message, variant: "destructive" });
+              }}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-input bg-background text-sm font-medium text-foreground hover:bg-muted tap-scale"
+            >
+              <GoogleIcon /> Continue with Google
+            </button>
 
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
