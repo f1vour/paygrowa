@@ -170,6 +170,19 @@ export default function CommunityTaskPage() {
           </Button>
         </div>
       </main>
+
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm px-6">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-6 text-center space-y-4 animate-scale-in">
+            <h2 className="text-lg font-bold text-foreground">Submit Report?</h2>
+            <p className="text-sm text-muted-foreground">Once submitted, your report cannot be changed. Your payment will be processed shortly.</p>
+            <div className="flex gap-3">
+              <Button variant="outline" size="lg" className="flex-1" onClick={() => setShowConfirm(false)}>Cancel</Button>
+              <Button size="lg" className="flex-1" onClick={confirmSubmit}>Submit</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
