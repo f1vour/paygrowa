@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Home, Wallet, PiggyBank, User, Menu, LogOut } from "lucide-react";
+import { Home, Wallet, PiggyBank, User, Menu, LogOut, ListChecks } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { useApp } from "@/context/AppContext";
@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 const navItems = [
   { to: "/dashboard", label: "Home", icon: Home },
+  { to: "/tasks", label: "Tasks", icon: ListChecks },
   { to: "/wallet", label: "Wallet", icon: Wallet },
   { to: "/savings", label: "Savings", icon: PiggyBank },
   { to: "/profile", label: "Profile", icon: User },

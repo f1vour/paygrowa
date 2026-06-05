@@ -1,8 +1,9 @@
-import { Home, Wallet, PiggyBank, User } from "lucide-react";
+import { Home, Wallet, PiggyBank, User, ListChecks } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   { path: "/dashboard", label: "Home", icon: Home },
+  { path: "/tasks", label: "Tasks", icon: ListChecks },
   { path: "/wallet", label: "Wallet", icon: Wallet },
   { path: "/savings", label: "Savings", icon: PiggyBank },
   { path: "/profile", label: "Profile", icon: User },
