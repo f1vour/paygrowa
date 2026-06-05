@@ -137,7 +137,7 @@ export default function HomePage() {
         </section>
 
         {/* How it works */}
-        <section className="px-6 py-16">
+        <section id="how-it-works" className="px-6 py-16 scroll-mt-20">
           <div className="mx-auto max-w-6xl">
             <h2 className="mb-2 text-2xl font-bold text-foreground text-center">Start earning in minutes</h2>
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-secondary" />
@@ -164,7 +164,7 @@ export default function HomePage() {
         </section>
 
         {/* Real earnings section */}
-        <section className="bg-muted/50 px-6 py-16">
+        <section id="about" className="bg-muted/50 px-6 py-16 scroll-mt-20">
           <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-start">
             {/* Left */}
             <div className="flex-1">
