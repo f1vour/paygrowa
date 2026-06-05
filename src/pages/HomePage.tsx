@@ -1,11 +1,30 @@
-import { CheckCircle, ClipboardCheck, CreditCard, Shield, Building2, Search } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle, ClipboardCheck, CreditCard, Shield, Building2, Search, Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import heroPhone from "@/assets/hero-phone.jpg";
 
+const NAV_LINKS: { label: string; to?: string; href?: string }[] = [
+  { label: "Home", to: "/" },
+  { label: "How It Works", href: "#how-it-works" },
+  { label: "For Contributors", to: "/signup" },
+  { label: "For Organizations", to: "/organizations" },
+  { label: "About Us", href: "#about" },
+];
+
 export default function HomePage() {
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleNav = (l: { to?: string; href?: string }) => {
+    setMenuOpen(false);
+    if (l.to) navigate(l.to);
+    else if (l.href) {
+      const el = document.querySelector(l.href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -13,18 +32,51 @@ export default function HomePage() {
       <header className="border-b border-border px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <PayGrowaLogo size="md" />
-          <nav className="hidden items-center gap-6 md:flex">
-            <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer">About Us</span>
-            <span className="text-sm text-muted-foreground hover:text-foreground cursor-pointer">Contact Us</span>
-            <button onClick={() => navigate("/login")} className="text-sm text-muted-foreground hover:text-foreground">Login</button>
-            <Button size="sm" onClick={() => navigate("/signup")}>Join Now</Button>
+          <nav className="hidden items-center gap-6 lg:flex">
+            {NAV_LINKS.map((l) => (
+              <button key={l.label} onClick={() => handleNav(l)} className="text-sm text-muted-foreground hover:text-foreground">
+                {l.label}
+              </button>
+            ))}
+            <button onClick={() => navigate("/login")} className="text-sm font-medium text-foreground hover:text-primary">Sign In</button>
+            <Button size="sm" onClick={() => navigate("/signup")}>Get Started</Button>
           </nav>
-          <div className="flex items-center gap-3 md:hidden">
-            <button onClick={() => navigate("/login")} className="text-sm font-medium text-primary tap-scale">Login</button>
-            <Button size="sm" onClick={() => navigate("/signup")}>Join Now</Button>
-          </div>
+          <button
+            className="lg:hidden rounded-lg border border-border bg-card p-2 tap-scale"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5 text-foreground" />
+          </button>
         </div>
       </header>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" onClick={() => setMenuOpen(false)}>
+          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" />
+          <div className="absolute right-0 top-0 h-full w-72 bg-card shadow-xl p-5 animate-slide-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <PayGrowaLogo size="sm" clickable={false} />
+              <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="rounded-lg p-2 hover:bg-muted">
+                <X className="h-5 w-5 text-foreground" />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-1">
+              {NAV_LINKS.map((l) => (
+                <button key={l.label} onClick={() => handleNav(l)} className="rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted">
+                  {l.label}
+                </button>
+              ))}
+              <div className="my-2 h-px bg-border" />
+              <button onClick={() => { setMenuOpen(false); navigate("/login"); }} className="rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-muted">
+                Sign In
+              </button>
+              <Button className="mt-2" onClick={() => { setMenuOpen(false); navigate("/signup"); }}>Get Started</Button>
+            </nav>
+          </div>
+        </div>
+      )}
+
 
       <main className="flex flex-1 flex-col">
         {/* Hero Section - desktop: side by side, mobile: stacked */}
