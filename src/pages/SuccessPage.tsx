@@ -9,7 +9,9 @@ export default function SuccessPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { completeTask, trustScore, savingsPercentage } = useApp();
-  const { taskTitle, reward } = (location.state as { taskTitle: string; reward: number }) || { taskTitle: "Survey", reward: 1000 };
+  const stateIn = (location.state as { taskTitle?: string; title?: string; reward?: number; amount?: number }) || {};
+  const taskTitle = stateIn.taskTitle || stateIn.title || "Survey";
+  const reward = stateIn.reward || stateIn.amount || 1000;
   const [credited, setCredited] = useState(false);
   const [showSavingsModal, setShowSavingsModal] = useState(false);
 
@@ -18,7 +20,7 @@ export default function SuccessPage() {
       completeTask(taskTitle, reward);
       setCredited(true);
       setTimeout(() => {
-        toast.success("Task Submitted", { description: `₦${reward.toLocaleString()} is being verified (approx. 20 minutes)` });
+        toast.success("Task Submitted", { description: `₦${reward.toLocaleString()} is being verified (approx. 5 minutes)` });
       }, 500);
       if (savingsPercentage === null) {
         setTimeout(() => setShowSavingsModal(true), 1500);
@@ -43,14 +45,14 @@ export default function SuccessPage() {
 
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-foreground">You earned ₦{reward.toLocaleString()}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Processing (approx. 20 minutes) — your wallet will update once verified</p>
+          <p className="mt-2 text-sm text-muted-foreground">Processing (approx. 5 minutes) — your wallet will update once verified</p>
         </div>
 
         {/* Status tracker */}
         <div className="w-full max-w-xs space-y-0">
           {[
             { label: "Earned", status: "done" as const, sub: "Done" },
-            { label: "Verifying (20 minutes)", status: "active" as const, sub: "In progress" },
+            { label: "Verifying (5 minutes)", status: "active" as const, sub: "In progress" },
             { label: "Paid", status: "pending" as const, sub: "Pending" },
           ].map(({ label, status, sub }, i) => (
             <div key={label} className="flex gap-3">

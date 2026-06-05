@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { ArrowLeft, Camera, Image as ImageIcon, Banknote, Clock, MapPin, X, CheckCircle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 
 const communityTasks: Record<string, { title: string; reward: number; deadline: string; instructions: string[]; example: string }> = {
@@ -34,11 +33,11 @@ const communityTasks: Record<string, { title: string; reward: number; deadline: 
 export default function CommunityTaskPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { completeTask } = useApp();
   const task = communityTasks[id || "c1"] || communityTasks["c1"];
   const [images, setImages] = useState<string[]>([]);
   const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
 
@@ -58,9 +57,13 @@ export default function CommunityTaskPage() {
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    setShowConfirm(true);
+  };
+
+  const confirmSubmit = () => {
     setSubmitting(true);
-    completeTask(task.title, task.reward);
-    setTimeout(() => navigate("/success", { state: { amount: task.reward, title: task.title, category: "community" } }), 400);
+    setShowConfirm(false);
+    setTimeout(() => navigate("/success", { state: { taskTitle: task.title, reward: task.reward, category: "community" } }), 300);
   };
 
   return (
@@ -167,6 +170,19 @@ export default function CommunityTaskPage() {
           </Button>
         </div>
       </main>
+
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm px-6">
+          <div className="w-full max-w-sm rounded-2xl bg-card p-6 text-center space-y-4 animate-scale-in">
+            <h2 className="text-lg font-bold text-foreground">Submit Report?</h2>
+            <p className="text-sm text-muted-foreground">Once submitted, your report cannot be changed. Your payment will be processed shortly.</p>
+            <div className="flex gap-3">
+              <Button variant="outline" size="lg" className="flex-1" onClick={() => setShowConfirm(false)}>Cancel</Button>
+              <Button size="lg" className="flex-1" onClick={confirmSubmit}>Submit</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

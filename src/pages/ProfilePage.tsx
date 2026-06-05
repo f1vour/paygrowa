@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import BottomNav from "@/components/BottomNav";
-import { useApp } from "@/context/AppContext";
+import { useApp, trustLevel } from "@/context/AppContext";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, profileCompleted, profile, trustScore, logout } = useApp();
+  const level = trustLevel(trustScore);
+  const levelColor = level === "Trusted" ? "text-success bg-success/10" : level === "Good" ? "text-primary bg-primary/10" : level === "Under Review" ? "text-warning bg-warning/10" : "text-destructive bg-destructive/10";
 
   return (
     <div className="flex min-h-screen flex-col bg-background pb-20">
@@ -29,6 +31,7 @@ export default function ProfilePage() {
           <div className="rounded-xl border border-border bg-card p-4 text-center">
             <p className="text-xs text-muted-foreground">Trust Score</p>
             <p className="text-xl font-bold text-foreground">{trustScore}</p>
+            <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${levelColor}`}>{level}</span>
           </div>
           <div className="rounded-xl border border-border bg-card p-4 text-center">
             <p className="text-xs text-muted-foreground">Profile</p>

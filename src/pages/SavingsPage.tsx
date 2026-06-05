@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const GOAL_CATEGORIES = [
-  "Emergency Fund", "Personal Purchase", "Family Support", "Education", "Travel", "Other",
+  "Emergency Fund", "Education", "Business", "Family Support", "Personal Purchase", "Travel", "Other",
 ];
 
 export default function SavingsPage() {

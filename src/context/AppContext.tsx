@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
+export type UserRole = "contributor" | "client" | "admin";
+
 export interface Transaction {
   id: string;
   title: string;
@@ -9,7 +11,7 @@ export interface Transaction {
   date: string;
   bankName?: string;
   goalName?: string;
-  verifyAt?: number; // timestamp when verification completes
+  verifyAt?: number;
 }
 
 export interface SavingsGoal {
@@ -19,6 +21,7 @@ export interface SavingsGoal {
   targetAmount: number;
   savedAmount: number;
   timeframe: "weekly" | "monthly" | null;
+  targetDate?: string;
 }
 
 export interface BankDetails {
@@ -27,8 +30,18 @@ export interface BankDetails {
   accountName: string;
 }
 
+export type TrustLevel = "Trusted" | "Good" | "Under Review" | "Restricted";
+
+export function trustLevel(score: number): TrustLevel {
+  if (score >= 90) return "Trusted";
+  if (score >= 70) return "Good";
+  if (score >= 50) return "Under Review";
+  return "Restricted";
+}
+
 interface AppState {
   isLoggedIn: boolean;
+  role: UserRole;
   user: { firstName: string; lastName: string; email: string } | null;
   walletBalance: number;
   savingsBalance: number;
@@ -44,30 +57,43 @@ interface AppState {
 interface AppContextType extends AppState {
   login: (email: string) => void;
   signup: (firstName: string, lastName: string, email: string) => void;
+  signupClient: (orgName: string, contactName: string, email: string) => void;
   logout: () => void;
+  setRole: (role: UserRole) => void;
   completeTask: (title: string, amount: number) => void;
   setSavingsPreference: (pct: number | null) => void;
   completeProfile: (gender: string, dob: string, state: string) => void;
   withdraw: (amount: number) => void;
   addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "savedAmount">) => void;
   editSavingsGoal: (id: string, updates: Partial<SavingsGoal>) => void;
+  deleteSavingsGoal: (id: string) => void;
   addMoneyToGoal: (goalId: string, amount: number) => void;
   setBankDetails: (details: BankDetails) => void;
   processVerifications: () => void;
+  applyTrustEvent: (event: "approved" | "highQuality" | "rejected" | "attentionFail" | "fraud") => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const VERIFY_DURATION = 5 * 60 * 1000; // 5 minutes (per current PayGrowa rule)
+const VERIFY_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const TRUST_DELTAS: Record<string, number> = {
+  approved: 2,
+  highQuality: 3,
+  rejected: -8,
+  attentionFail: -5,
+  fraud: -20,
+};
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>({
     isLoggedIn: false,
+    role: "contributor",
     user: null,
     walletBalance: 0,
     savingsBalance: 0,
     savingsPercentage: null,
-    trustScore: 0,
+    trustScore: 100,
     transactions: [],
     profileCompleted: false,
     profile: null,
@@ -80,11 +106,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signup = useCallback((firstName: string, lastName: string, email: string) => {
-    setState((s) => ({ ...s, isLoggedIn: true, user: { firstName, lastName, email } }));
+    setState((s) => ({ ...s, isLoggedIn: true, role: "contributor", user: { firstName, lastName, email } }));
+  }, []);
+
+  const signupClient = useCallback((orgName: string, contactName: string, email: string) => {
+    setState((s) => ({ ...s, isLoggedIn: true, role: "client", user: { firstName: contactName, lastName: orgName, email } }));
   }, []);
 
   const logout = useCallback(() => {
-    setState((s) => ({ ...s, isLoggedIn: false }));
+    setState((s) => ({ ...s, isLoggedIn: false, role: "contributor" }));
+  }, []);
+
+  const setRole = useCallback((role: UserRole) => {
+    setState((s) => ({ ...s, role }));
   }, []);
 
   const completeTask = useCallback((title: string, amount: number) => {
@@ -100,7 +134,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       return {
         ...s,
-        trustScore: s.trustScore + 5,
         transactions: [tx, ...s.transactions],
       };
     });
@@ -111,11 +144,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const now = Date.now();
       let balanceAdd = 0;
       let savingsAdd = 0;
+      let trustAdd = 0;
       const updatedTx = s.transactions.map((tx) => {
         if (tx.status === "verifying" && tx.verifyAt && now >= tx.verifyAt) {
           const savingsDeduction = s.savingsPercentage ? (tx.amount * s.savingsPercentage) / 100 : 0;
           balanceAdd += tx.amount - savingsDeduction;
           savingsAdd += savingsDeduction;
+          trustAdd += TRUST_DELTAS.approved;
           return { ...tx, status: "paid" as const };
         }
         return tx;
@@ -125,6 +160,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...s,
         walletBalance: s.walletBalance + balanceAdd,
         savingsBalance: s.savingsBalance + savingsAdd,
+        trustScore: Math.max(0, Math.min(100, s.trustScore + trustAdd)),
         transactions: updatedTx,
       };
     });
@@ -139,21 +175,55 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const withdraw = useCallback((amount: number) => {
-    setState((s) => ({
-      ...s,
-      walletBalance: Math.max(0, s.walletBalance - amount),
-      transactions: [
-        { id: Date.now().toString(), title: "Withdrawal", amount: -amount, type: "withdrawal", status: "completed", date: new Date().toLocaleDateString("en-NG"), bankName: s.bankDetails?.bankName },
-        ...s.transactions,
-      ],
-    }));
+    setState((s) => {
+      const txs: Transaction[] = [];
+      let walletAfter = Math.max(0, s.walletBalance - amount);
+      let savingsAfter = s.savingsBalance;
+      // Auto-savings if no autosave preference set: move 10% of withdrawal to savings
+      if (s.savingsPercentage === null && amount >= 100) {
+        const autoSave = Math.round(amount * 0.1);
+        if (walletAfter >= autoSave) {
+          walletAfter -= autoSave;
+          savingsAfter += autoSave;
+          txs.push({
+            id: (Date.now() + 1).toString(),
+            title: "Auto-Save (10%)",
+            amount: -autoSave,
+            type: "savings",
+            status: "completed",
+            date: new Date().toLocaleDateString("en-NG"),
+          });
+        }
+      }
+      txs.unshift({
+        id: Date.now().toString(),
+        title: "Withdrawal",
+        amount: -amount,
+        type: "withdrawal",
+        status: "completed",
+        date: new Date().toLocaleDateString("en-NG"),
+        bankName: s.bankDetails?.bankName,
+      });
+      return {
+        ...s,
+        walletBalance: walletAfter,
+        savingsBalance: savingsAfter,
+        transactions: [...txs, ...s.transactions],
+      };
+    });
   }, []);
 
   const addSavingsGoal = useCallback((goal: Omit<SavingsGoal, "id" | "savedAmount">) => {
-    setState((s) => ({
-      ...s,
-      savingsGoals: [...s.savingsGoals, { ...goal, id: Date.now().toString(), savedAmount: 0 }],
-    }));
+    setState((s) => {
+      // Distribute existing savingsBalance to the new goal up to its target
+      const existingAllocated = s.savingsGoals.reduce((sum, g) => sum + g.savedAmount, 0);
+      const unallocated = Math.max(0, s.savingsBalance - existingAllocated);
+      const seedAmount = Math.min(unallocated, goal.targetAmount);
+      return {
+        ...s,
+        savingsGoals: [...s.savingsGoals, { ...goal, id: Date.now().toString(), savedAmount: seedAmount }],
+      };
+    });
   }, []);
 
   const editSavingsGoal = useCallback((id: string, updates: Partial<SavingsGoal>) => {
@@ -161,6 +231,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ...s,
       savingsGoals: s.savingsGoals.map((g) => g.id === id ? { ...g, ...updates } : g),
     }));
+  }, []);
+
+  const deleteSavingsGoal = useCallback((id: string) => {
+    setState((s) => ({ ...s, savingsGoals: s.savingsGoals.filter((g) => g.id !== id) }));
   }, []);
 
   const addMoneyToGoal = useCallback((goalId: string, amount: number) => {
@@ -189,11 +263,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, bankDetails: details }));
   }, []);
 
+  const applyTrustEvent = useCallback((event: keyof typeof TRUST_DELTAS) => {
+    setState((s) => ({ ...s, trustScore: Math.max(0, Math.min(100, s.trustScore + TRUST_DELTAS[event])) }));
+  }, []);
+
   return (
     <AppContext.Provider value={{
-      ...state, login, signup, logout, completeTask, setSavingsPreference,
-      completeProfile, withdraw, addSavingsGoal, editSavingsGoal, addMoneyToGoal,
-      setBankDetails, processVerifications,
+      ...state, login, signup, signupClient, logout, setRole, completeTask, setSavingsPreference,
+      completeProfile, withdraw, addSavingsGoal, editSavingsGoal, deleteSavingsGoal, addMoneyToGoal,
+      setBankDetails, processVerifications, applyTrustEvent,
     }}>
       {children}
     </AppContext.Provider>
