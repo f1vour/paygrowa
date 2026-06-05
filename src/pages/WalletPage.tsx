@@ -40,7 +40,7 @@ export default function WalletPage() {
           <div className="rounded-xl border border-warning/30 bg-warning/5 p-4">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-warning" />
-              <span className="text-sm font-semibold text-foreground">Processing (approx. 20 minutes)</span>
+              <span className="text-sm font-semibold text-foreground">Processing (approx. 5 minutes)</span>
             </div>
             <p className="text-xs text-muted-foreground">{verifyingTxs.length} task(s) verifying — balance will update once confirmed.</p>
           </div>
