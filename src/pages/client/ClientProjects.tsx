@@ -3,13 +3,17 @@ import { Plus, Eye, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, StatusBadge, EmptyState } from "@/components/admin/AdminUi";
 import { useClient } from "@/context/ClientContext";
+import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 
 export default function ClientProjects() {
   const navigate = useNavigate();
   const { projects, setProjectStatus } = useClient();
+  const { orgVerification } = useApp();
+  const verified = orgVerification?.status === "Verified Organization";
 
   const submit = (id: string) => {
+    if (!verified) { toast.error("Verify your organization to publish projects"); return; }
     setProjectStatus(id, "Under Review");
     toast.success("Project submitted for review");
   };
