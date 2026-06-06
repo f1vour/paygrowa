@@ -25,7 +25,7 @@ export default function ClientLayout() {
       <aside className="hidden md:flex w-60 flex-col border-r border-border bg-card">
         <div className="border-b border-border px-5 py-4">
           <PayGrowaLogo size="md" clickable={false} />
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Client Portal</p>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Organization Portal</p>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {navItems.map(({ to, icon: Icon, label }) => (
