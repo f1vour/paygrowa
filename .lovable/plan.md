@@ -1,99 +1,89 @@
 
-# PayGrowa Expansion Plan
+This is a large multi-part build. I'll execute it in phases, in this order. Each phase is shippable on its own.
 
-This is a large multi-section request. I'll implement it in focused, additive layers so no approved screen is redesigned. Existing Home, Contributor Auth, Wallet, Savings, Profile, Contributor Dashboard, and Admin screens stay locked. Only the changes below are made.
+## Phase 1 — Route wiring & navigation (foundation)
 
----
+- **App.tsx**: register the previously-built pages that aren't wired:
+  - `/organizations` → `OrganizationsLandingPage`
+  - `/organization/signup`, `/organization/login`
+  - `/organization` (protected, wrapped in `ClientLayout`) → dashboard, projects, projects/new, analytics, payments, profile
+  - `/tasks` → `TasksHubPage` (inside `AppShell`)
+  - `/admin/projects` → `AdminProjects` (already exists, not wired)
+- **AdminLayout nav**: add "Project Review" entry pointing to `/admin/projects`.
+- **NotFound page**: replace "Back to dashboard" CTA with a simple **Back** button that calls `navigate(-1)` (history fallback to `/`).
+- **Terminology pass**: all user-facing strings in the Client/Org area say "Organization / Organizations". Internal route prefix becomes `/organization` (singular, user-facing). Keep `ClientContext`/`ClientLayout` file names internal — only UI copy changes.
 
-## 1. Roles & Routing Foundation
+## Phase 2 — Contributor Profile (expanded)
 
-- Extend `AppContext` with a `role` field: `"contributor" | "client" | "admin"` (default `contributor`). No change to existing contributor flows.
-- Add `ClientProtected.tsx` (mirrors `AdminProtected`) gating `/client/*` routes for users whose role is `client` (or via a simple allowlist fallback for MVP demo).
-- Keep admin allowlist behavior unchanged.
+Rebuild `ProfileSetupPage` and `ProfilePage` as a single profile hub with sections:
 
-## 2. Landing Page Navigation (Home Screen NOT redesigned)
+1. **Basic Information** — full name (prefilled), email (prefilled, read-only), phone, profile photo (upload/take), country (Nigeria/Uganda/Zambia, default Nigeria), state (all 36 NG states alphabetical), languages (multi-select: Hausa, Igbo, Yoruba, English), DOB (date picker), gender, education level. Save Changes button.
+2. **Account Security** — password field (masked) + Change Password modal (current / new / confirm).
+3. **Identity Verification** — status card (Not Verified / Pending / Verified / Rejected). "Verify Identity" opens a 4-step modal: ID type → ID number → upload doc (or take picture) → upload selfie → Submit. Updates status to Pending Review.
 
-- Add a responsive top nav inside the existing `HomePage` hero region (header only — hero, sections, layout untouched):
-  - Desktop: horizontal links — Home, How It Works, For Contributors, For Organizations, About Us, Sign In, Get Started.
-  - Mobile: hamburger using shadcn `Sheet`.
-- "For Organizations" routes to `/organizations` (new page).
-- All other links are anchor scrolls to existing sections or existing routes. Sign In → `/login`, Get Started → `/signup`.
+`AppContext` gains: `profile` (extended fields), `identityStatus`, `setIdentityStatus`, `submitIdentity()`, `changePassword()`. All state local (no backend writes yet — UI-only persistence in context like existing pattern).
 
-## 3. Organization Landing Page (NEW)
+Dashboard cards:
+- "Complete your profile" → `/profile-setup` (already correct, just confirm).
+- "Verify your identity" → routes to `/profile` Identity section (anchor). Hidden when verified.
 
-- New route `/organizations` → `OrganizationsLandingPage.tsx` with sections:
-  - Hero ("Collect Reliable Community Data Across Nigeria") with CTAs Create Organization Account / Book a Demo.
-  - Who We Serve cards (NGOs, Research, Universities, Government, Businesses, Development Partners).
-  - What You Can Do — 3 cards (Survey Research, Community Reporting, Field Data Collection) with bullet lists.
-  - How It Works — 7 steps.
-  - Features grid.
-  - Final CTA.
-- Mobile-first, container-constrained on desktop, reusing existing tokens (blue/green, radii, typography).
+## Phase 3 — Trust Score & Leaderboard UI
 
-## 4. Organization Auth (NEW, contributor auth untouched)
+- **Trust Score Card** on dashboard: numeric score (e.g. 85/100), level badge, progress bar to next level, expandable breakdown (Task Completion Rate, Quality Approval Rate, Verification Status, Consistency, On-Time Submission Rate — mocked values for now).
+- Update `trustLevel()` to new 6-tier scheme: New (0–20), Verified (21–40), Bronze (41–60), Silver (61–80), Gold (81–95), Elite (96–100).
+- **Leaderboard widget** on dashboard: top 3 + "Your Rank #47 of 2,315" + "View Leaderboard" link.
+- **Leaderboard page** (`/leaderboard`): table with Rank, Username (masked), Level, Trust Score, Tasks Completed. Mocked data.
 
-- `/organization/signup` (alias `/client-signup` & `/organization-signup`) → `OrganizationSignupPage.tsx`
-- `/organization/login` → `OrganizationLoginPage.tsx`
-- Mirrors existing contributor sign-up layout (two-column desktop), new left-panel image generated for organizations.
-- Fields per spec (Org Name, Org Type, Contact, Email, Phone, Country, State, Password, Confirm, Terms, Continue with Google).
-- On success: sets role `client`, navigates to `/client/dashboard`.
+## Phase 4 — Dashboard restructure
 
-## 5. Client Portal (NEW, separate from Contributor + Admin)
+- Welcome toast on first dashboard visit per session.
+- Profile Completion Card with sub-progress (Profile Info %, ID Verification status).
+- Available Tasks **preview only** (3 surveys, 3 community) with "View All Tasks →".
+- When profile incomplete: show 2 unlocked tasks + remaining tasks **blurred/locked** with "Complete Profile" CTA.
+- Eligibility hint: when a locked task is tapped, show modal listing missing requirements ("Age 18–35, Lagos State, English, Verified Profile").
 
-- `ClientLayout.tsx` with sidebar nav: Dashboard, Projects, Create Project, Analytics, Payments, Profile (mobile-first centered shell on desktop, hamburger on mobile).
-- `ClientContext.tsx` manages `projects[]` in memory with statuses (Draft, Under Review, Approved, Live, Paused, Completed, Rejected) and computed analytics. Designed for future Supabase wiring.
-- Screens:
-  - `ClientDashboard` — KPI cards (Active/Draft/Under Review/Live/Completed projects, Total Spend, Responses Collected).
-  - `ClientProjects` — list with View / Edit / Submit-for-Review.
-  - `ClientCreateProject` — full form (title, objective, description, type Survey|Community Reporting, country, state, language, age range, gender, responses required, est. completion, budget, reward/response, deadline). Conditional Survey Question Builder or Community Reporting Builder. Live budget calculator (responses × reward + 15% platform fee).
-  - `ClientProjectDetails` — View / Edit / Submit For Review.
-  - `ClientAnalytics` — responses collected, completion rate, budget used/remaining, quality pass rate, avg completion time; CSV / Excel export buttons (client-side blob).
-  - `ClientPayments` — simple ledger view (mock).
-  - `ClientProfile` — org profile editor.
+## Phase 5 — Tasks Hub page
 
-## 6. Admin Panel — Additive Updates Only
+Rebuild `TasksHubPage` to mirror dashboard structure: sections for Survey Tasks and Local Community Reporting (subcategories: Waste, Road, NGO, Government Data). Each task card shows eligibility lock state.
 
-- Extend `AdminContext` with `clientProjects[]` mirrored from client submissions.
-- Add **Project Review** screen `/admin/projects` (new) — list pending client projects with Approve / Reject / Request Changes. Approve converts project → task in existing admin tasks list.
-- Add nav item "Projects" to existing `AdminLayout` sidebar (insertion only, no redesign).
-- Extend dashboard metrics card row with: Total Contributors, Total Clients, Active Projects (additive cards — existing cards remain).
-- No redesign of existing admin Tasks / Submissions / Payments / Users / Analytics / Settings.
+## Phase 6 — Local Community Reporting flow (dedicated)
 
-## 7. Contributor Updates (Minimal, Additive)
+Replace current `CommunityTaskPage` with a 6-step wizard with stepper UI:
 
-- **Tasks tab in navigation** — add `Tasks` between Home and Wallet in both `BottomNav` (mobile) and `AppShell` sidebar (desktop). New route `/tasks` → `TasksHubPage.tsx` with category cards (Surveys, Local Community Reporting, Data Tagging, AI Annotation) each showing count / time / reward range / View Tasks. Clicking a category opens a listing view (reuses existing task card pattern); existing dashboard task lists are untouched.
-- **Local Community Reporting submission flow** — after submit, route through the existing Confirm Submission → Success → Savings Allocation flow used by Surveys (reuses `SuccessPage`). Edit `CommunityTaskPage` only.
-- **Verification copy** — replace all "20 minutes / 20 mins" user-facing strings with "5 minutes / 5 mins" across Wallet, Success, Task screens, notifications. (Internal `VERIFY_DURATION` already 5 min.)
-- **Trust Score** — show numeric score + level (Trusted/Good/Under Review/Restricted) on Profile. Add scoring deltas in `AppContext` (approved +2, high quality +3, rejected -8, failed attention -5, fraud -20). No UI redesign — added as a small block on existing Profile.
+1. **Task Overview** — title, category, reward, est. time, deadline, location requirement, description → "Start Task".
+2. **Requirements checklist** → "I Understand, Continue".
+3. **Evidence Collection** — multi-photo upload (min count), optional video, GPS capture button (mock) with timestamp.
+4. **Observation Form** — category-specific fields (Waste, Road, Government Data, NGO templates).
+5. **Review** — summary of all collected data, Back / Submit.
+6. **Submission Confirmation** — Pending Review, 24–48h, "Return to Dashboard".
 
-## 8. Wallet & Savings Logic (no UI changes)
+Validation per step; cannot advance with missing data. Submitted reports stored in `AppContext.communitySubmissions` with status (Submitted/Under Review/Approved/Rejected/Paid). New "My Reports" section on Wallet/Profile to view status.
 
-- Wallet: keep submission status flow (Submitted → Under Verification → Approved → Paid) — already in place; add "Pending Balance" derived value display in existing balance area (smallest possible insertion).
-- Savings: on wallet withdrawal, if user has no autosave enabled, automatically move 10% to savings and show toast "We've set aside a small amount to help you build financial stability." Existing savings balance already counts toward goals via current logic; ensure progress recomputes when a goal is created after savings already exist.
-- Goal categories list expanded per spec (Emergency Fund, Education, Business, Family Support, Personal Purchase, Travel, Other) — added in existing goal form select only.
+## Phase 7 — Organization verification (UI)
 
-## 9. Universal Error / Empty State
+Add Verification section to `ClientProfile`: org name, type, contact person, email, phone, country, status badge, "Verify Organization" button → modal with uploads (Cert of Registration, NGO doc, Business Reg, Govt Auth Letter). Status: Pending / Verified / Rejected. Banner across org screens: "Only verified organizations can publish live projects" — disables publish action when unverified.
 
-- Update `NotFound.tsx` to PayGrowa-styled fallback: "Oops! Nothing found here" + "Go to Dashboard" button using existing tokens.
+## Phase 8 — Polish
 
-## 10. Responsive Polish
-
-- Audit new pages and ensure desktop uses centered ~460px mobile-app container (organization landing uses wider marketing sections per global rule). No edits to existing approved screens.
+- Every button verified to route or perform an action (no Coming Soon).
+- Currency check: all ₦, no `$`.
+- Mobile-first; constrained desktop container preserved via existing `AppShell`.
 
 ---
 
-## Technical Notes
+## Technical notes
 
-- All new state lives in new contexts (`ClientContext`) or additive fields on existing contexts — no breaking changes.
-- Data shapes (Project, Submission, TrustEvent) defined as TS interfaces ready for Supabase mapping.
-- CSV/Excel export: CSV via Blob; Excel via simple `xlsx` blob (lightweight) or `.csv` fallback labeled Excel-compatible.
-- New image asset generated for organization signup left panel.
-- No changes to: HomePage hero/body, contributor LoginPage/SignupPage, DashboardPage layout, WalletPage layout, SavingsPage layout, ProfilePage layout, SurveyPage, TaskDetailPage, existing admin screens.
+- **No backend changes** in this pass. All new state lives in `AppContext` / `ClientContext` (in-memory, matching existing pattern). Real persistence (Supabase tables for profiles, identity submissions, trust events, community reports, org verification) is a follow-up phase that needs RLS design.
+- File uploads use object URLs locally (no storage bucket yet).
+- GPS uses `navigator.geolocation` with graceful fallback to mocked coords.
+- Stepper component built locally (no new dependency).
+- 6-tier `trustLevel` is a breaking change to existing call sites — I'll update `ProfilePage` accordingly.
+- Existing locked surfaces (Home, Auth, Wallet structure, Savings structure) are not modified beyond what's explicitly listed (dashboard restructure is in-scope per the spec).
 
-## Out of Scope (explicit)
+## Out of scope (call out explicitly)
 
-- Backend wiring to Supabase tables (structure ready, but not creating tables in this pass unless you confirm).
-- Real Google OAuth provider config changes (uses existing managed flow).
-- Identity verification document upload backend.
+- Actual backend persistence / RLS for profiles, identity docs, trust events, leaderboard, community submissions, org verification documents. These need a follow-up Supabase migration phase.
+- Admin moderation screens for identity verification and org verification approval (UI exists for submission only; admin approval screens to be added in a follow-up).
+- Real eligibility matching engine — Phase 4/5 use a simple client-side rule set (verified + profile complete) as a placeholder.
 
-Confirm and I'll implement in this order: foundation/roles → org landing + auth → client portal → admin additions → contributor Tasks hub + community flow fix + copy/trust updates → NotFound + responsive polish.
+Given the size, I recommend shipping Phases 1–3 first (foundation + visible trust UI + profile expansion), then 4–5 (dashboard/tasks restructure), then 6 (community flow), then 7–8.

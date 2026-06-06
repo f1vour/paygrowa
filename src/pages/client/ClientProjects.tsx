@@ -3,13 +3,17 @@ import { Plus, Eye, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, StatusBadge, EmptyState } from "@/components/admin/AdminUi";
 import { useClient } from "@/context/ClientContext";
+import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 
 export default function ClientProjects() {
   const navigate = useNavigate();
   const { projects, setProjectStatus } = useClient();
+  const { orgVerification } = useApp();
+  const verified = orgVerification?.status === "Verified Organization";
 
   const submit = (id: string) => {
+    if (!verified) { toast.error("Verify your organization to publish projects"); return; }
     setProjectStatus(id, "Under Review");
     toast.success("Project submitted for review");
   };
@@ -17,7 +21,7 @@ export default function ClientProjects() {
   return (
     <div>
       <PageHeader title="Projects" subtitle="Manage all your data collection projects" actions={
-        <Button onClick={() => navigate("/client/create")}><Plus className="h-4 w-4" /> New</Button>
+        <Button onClick={() => navigate("/organization/create")}><Plus className="h-4 w-4" /> New</Button>
       } />
       {projects.length === 0 ? (
         <EmptyState title="No projects yet" description="Get started by creating a project." />
@@ -42,7 +46,7 @@ export default function ClientProjects() {
                   <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/client/create?edit=${p.id}`)}><Eye className="h-3 w-3" /> Edit</Button>
+                      <Button size="sm" variant="outline" onClick={() => navigate(`/organization/create?edit=${p.id}`)}><Eye className="h-3 w-3" /> Edit</Button>
                       {p.status === "Draft" && (
                         <Button size="sm" onClick={() => submit(p.id)}><Send className="h-3 w-3" /> Submit</Button>
                       )}

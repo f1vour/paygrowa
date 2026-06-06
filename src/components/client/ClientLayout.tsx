@@ -5,12 +5,12 @@ import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { useApp } from "@/context/AppContext";
 
 const navItems = [
-  { to: "/client/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/client/projects", icon: FolderKanban, label: "Projects" },
-  { to: "/client/create", icon: Plus, label: "Create Project" },
-  { to: "/client/analytics", icon: BarChart3, label: "Analytics" },
-  { to: "/client/payments", icon: Wallet, label: "Payments" },
-  { to: "/client/profile", icon: User, label: "Profile" },
+  { to: "/organization/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/organization/projects", icon: FolderKanban, label: "Projects" },
+  { to: "/organization/create", icon: Plus, label: "Create Project" },
+  { to: "/organization/analytics", icon: BarChart3, label: "Analytics" },
+  { to: "/organization/payments", icon: Wallet, label: "Payments" },
+  { to: "/organization/profile", icon: User, label: "Profile" },
 ];
 
 export default function ClientLayout() {
@@ -25,7 +25,7 @@ export default function ClientLayout() {
       <aside className="hidden md:flex w-60 flex-col border-r border-border bg-card">
         <div className="border-b border-border px-5 py-4">
           <PayGrowaLogo size="md" clickable={false} />
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Client Portal</p>
+          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Organization Portal</p>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {navItems.map(({ to, icon: Icon, label }) => (

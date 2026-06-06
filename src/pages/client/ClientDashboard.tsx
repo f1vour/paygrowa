@@ -14,7 +14,7 @@ export default function ClientDashboard() {
   return (
     <div>
       <PageHeader title="Dashboard" subtitle="Overview of your projects and data collection" actions={
-        <Button onClick={() => navigate("/client/create")}><Plus className="h-4 w-4" /> Create Project</Button>
+        <Button onClick={() => navigate("/organization/create")}><Plus className="h-4 w-4" /> Create Project</Button>
       } />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard label="Active Projects" value={count("Live")} accent="secondary" />
@@ -32,7 +32,7 @@ export default function ClientDashboard() {
         ) : (
           <div className="space-y-2">
             {projects.slice(0, 5).map((p) => (
-              <button key={p.id} onClick={() => navigate(`/client/projects`)}
+              <button key={p.id} onClick={() => navigate(`/organization/projects`)}
                 className="flex w-full items-center justify-between rounded-xl border border-border bg-card p-4 text-left hover:bg-muted/40">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{p.title}</p>

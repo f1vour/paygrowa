@@ -30,13 +30,81 @@ export interface BankDetails {
   accountName: string;
 }
 
-export type TrustLevel = "Trusted" | "Good" | "Under Review" | "Restricted";
+export type IdentityType = "NIN" | "Voters Card" | "Drivers License" | "International Passport";
+export type IdentityStatus = "Not Verified" | "Pending Review" | "Verified" | "Rejected";
+
+export interface IdentitySubmission {
+  type: IdentityType;
+  number: string;
+  docDataUrl?: string;
+  selfieDataUrl?: string;
+  submittedAt: string;
+}
+
+export interface ContributorProfile {
+  fullName: string;
+  phone: string;
+  photoDataUrl?: string;
+  country: "Nigeria" | "Uganda" | "Zambia";
+  state: string;
+  languages: string[];
+  dob: string;
+  gender: "Male" | "Female" | "Prefer Not To Say" | "";
+  education: string;
+}
+
+export interface CommunitySubmission {
+  id: string;
+  taskId: string;
+  taskTitle: string;
+  category: string;
+  reward: number;
+  photos: string[];
+  videos: string[];
+  gps?: { lat: number; lng: number; capturedAt: string };
+  observations: Record<string, string | number>;
+  status: "Submitted" | "Under Review" | "Approved" | "Rejected" | "Paid";
+  submittedAt: string;
+}
+
+export type OrgVerificationStatus = "Not Submitted" | "Pending Verification" | "Verified Organization" | "Rejected";
+
+export interface OrgVerification {
+  organizationName: string;
+  organizationType: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  country: string;
+  status: OrgVerificationStatus;
+  documents: { label: string; dataUrl: string }[];
+}
+
+// 6-tier trust scheme
+export type TrustLevel =
+  | "New Contributor"
+  | "Verified Contributor"
+  | "Bronze Contributor"
+  | "Silver Contributor"
+  | "Gold Contributor"
+  | "Elite Contributor";
 
 export function trustLevel(score: number): TrustLevel {
-  if (score >= 90) return "Trusted";
-  if (score >= 70) return "Good";
-  if (score >= 50) return "Under Review";
-  return "Restricted";
+  if (score >= 96) return "Elite Contributor";
+  if (score >= 81) return "Gold Contributor";
+  if (score >= 61) return "Silver Contributor";
+  if (score >= 41) return "Bronze Contributor";
+  if (score >= 21) return "Verified Contributor";
+  return "New Contributor";
+}
+
+export function nextLevelTarget(score: number): { level: TrustLevel; threshold: number } {
+  if (score < 21) return { level: "Verified Contributor", threshold: 21 };
+  if (score < 41) return { level: "Bronze Contributor", threshold: 41 };
+  if (score < 61) return { level: "Silver Contributor", threshold: 61 };
+  if (score < 81) return { level: "Gold Contributor", threshold: 81 };
+  if (score < 96) return { level: "Gold Contributor", threshold: 96 };
+  return { level: "Elite Contributor", threshold: 100 };
 }
 
 interface AppState {
@@ -49,9 +117,13 @@ interface AppState {
   trustScore: number;
   transactions: Transaction[];
   profileCompleted: boolean;
-  profile: { gender: string; dob: string; state: string } | null;
+  profile: ContributorProfile | null;
+  identityStatus: IdentityStatus;
+  identitySubmission: IdentitySubmission | null;
   savingsGoals: SavingsGoal[];
   bankDetails: BankDetails | null;
+  communitySubmissions: CommunitySubmission[];
+  orgVerification: OrgVerification | null;
 }
 
 interface AppContextType extends AppState {
@@ -62,7 +134,12 @@ interface AppContextType extends AppState {
   setRole: (role: UserRole) => void;
   completeTask: (title: string, amount: number) => void;
   setSavingsPreference: (pct: number | null) => void;
+  // Backwards-compatible quick profile completion (used by current ProfileSetupPage)
   completeProfile: (gender: string, dob: string, state: string) => void;
+  // Full profile save
+  saveProfile: (profile: ContributorProfile) => void;
+  submitIdentity: (sub: IdentitySubmission) => void;
+  setIdentityStatus: (status: IdentityStatus) => void;
   withdraw: (amount: number) => void;
   addSavingsGoal: (goal: Omit<SavingsGoal, "id" | "savedAmount">) => void;
   editSavingsGoal: (id: string, updates: Partial<SavingsGoal>) => void;
@@ -71,11 +148,13 @@ interface AppContextType extends AppState {
   setBankDetails: (details: BankDetails) => void;
   processVerifications: () => void;
   applyTrustEvent: (event: "approved" | "highQuality" | "rejected" | "attentionFail" | "fraud") => void;
+  addCommunitySubmission: (sub: Omit<CommunitySubmission, "id" | "submittedAt" | "status">) => string;
+  setOrgVerification: (v: OrgVerification | null) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const VERIFY_DURATION = 5 * 60 * 1000; // 5 minutes
+const VERIFY_DURATION = 5 * 60 * 1000;
 
 const TRUST_DELTAS: Record<string, number> = {
   approved: 2,
@@ -93,12 +172,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     walletBalance: 0,
     savingsBalance: 0,
     savingsPercentage: null,
-    trustScore: 100,
+    trustScore: 72,
     transactions: [],
     profileCompleted: false,
     profile: null,
+    identityStatus: "Not Verified",
+    identitySubmission: null,
     savingsGoals: [],
     bankDetails: null,
+    communitySubmissions: [],
+    orgVerification: null,
   });
 
   const login = useCallback((email: string) => {
@@ -117,34 +200,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, isLoggedIn: false, role: "contributor" }));
   }, []);
 
-  const setRole = useCallback((role: UserRole) => {
-    setState((s) => ({ ...s, role }));
-  }, []);
+  const setRole = useCallback((role: UserRole) => setState((s) => ({ ...s, role })), []);
 
   const completeTask = useCallback((title: string, amount: number) => {
     setState((s) => {
       const tx: Transaction = {
-        id: Date.now().toString(),
-        title,
-        amount,
-        type: "task",
-        status: "verifying",
-        date: new Date().toLocaleDateString("en-NG"),
-        verifyAt: Date.now() + VERIFY_DURATION,
+        id: Date.now().toString(), title, amount, type: "task", status: "verifying",
+        date: new Date().toLocaleDateString("en-NG"), verifyAt: Date.now() + VERIFY_DURATION,
       };
-      return {
-        ...s,
-        transactions: [tx, ...s.transactions],
-      };
+      return { ...s, transactions: [tx, ...s.transactions] };
     });
   }, []);
 
   const processVerifications = useCallback(() => {
     setState((s) => {
       const now = Date.now();
-      let balanceAdd = 0;
-      let savingsAdd = 0;
-      let trustAdd = 0;
+      let balanceAdd = 0, savingsAdd = 0, trustAdd = 0;
       const updatedTx = s.transactions.map((tx) => {
         if (tx.status === "verifying" && tx.verifyAt && now >= tx.verifyAt) {
           const savingsDeduction = s.savingsPercentage ? (tx.amount * s.savingsPercentage) / 100 : 0;
@@ -166,20 +237,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const setSavingsPreference = useCallback((pct: number | null) => {
-    setState((s) => ({ ...s, savingsPercentage: pct }));
-  }, []);
+  const setSavingsPreference = useCallback((pct: number | null) => setState((s) => ({ ...s, savingsPercentage: pct })), []);
 
   const completeProfile = useCallback((gender: string, dob: string, state_: string) => {
-    setState((s) => ({ ...s, profileCompleted: true, profile: { gender, dob, state: state_ } }));
+    setState((s) => ({
+      ...s,
+      profileCompleted: true,
+      profile: s.profile
+        ? { ...s.profile, gender: gender as any, dob, state: state_ }
+        : {
+            fullName: `${s.user?.firstName || ""} ${s.user?.lastName || ""}`.trim(),
+            phone: "", country: "Nigeria", state: state_, languages: ["English"],
+            dob, gender: gender as any, education: "",
+          },
+    }));
   }, []);
+
+  const saveProfile = useCallback((profile: ContributorProfile) => {
+    setState((s) => ({
+      ...s,
+      profile,
+      profileCompleted: Boolean(profile.fullName && profile.dob && profile.state && profile.languages.length && profile.gender),
+    }));
+  }, []);
+
+  const submitIdentity = useCallback((sub: IdentitySubmission) => {
+    setState((s) => ({ ...s, identitySubmission: sub, identityStatus: "Pending Review" }));
+  }, []);
+
+  const setIdentityStatus = useCallback((status: IdentityStatus) => setState((s) => ({ ...s, identityStatus: status })), []);
 
   const withdraw = useCallback((amount: number) => {
     setState((s) => {
       const txs: Transaction[] = [];
       let walletAfter = Math.max(0, s.walletBalance - amount);
       let savingsAfter = s.savingsBalance;
-      // Auto-savings if no autosave preference set: move 10% of withdrawal to savings
       if (s.savingsPercentage === null && amount >= 100) {
         const autoSave = Math.round(amount * 0.1);
         if (walletAfter >= autoSave) {
@@ -187,50 +279,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           savingsAfter += autoSave;
           txs.push({
             id: (Date.now() + 1).toString(),
-            title: "Auto-Save (10%)",
-            amount: -autoSave,
-            type: "savings",
-            status: "completed",
+            title: "Auto-Save (10%)", amount: -autoSave, type: "savings", status: "completed",
             date: new Date().toLocaleDateString("en-NG"),
           });
         }
       }
       txs.unshift({
         id: Date.now().toString(),
-        title: "Withdrawal",
-        amount: -amount,
-        type: "withdrawal",
-        status: "completed",
-        date: new Date().toLocaleDateString("en-NG"),
-        bankName: s.bankDetails?.bankName,
+        title: "Withdrawal", amount: -amount, type: "withdrawal", status: "completed",
+        date: new Date().toLocaleDateString("en-NG"), bankName: s.bankDetails?.bankName,
       });
-      return {
-        ...s,
-        walletBalance: walletAfter,
-        savingsBalance: savingsAfter,
-        transactions: [...txs, ...s.transactions],
-      };
+      return { ...s, walletBalance: walletAfter, savingsBalance: savingsAfter, transactions: [...txs, ...s.transactions] };
     });
   }, []);
 
   const addSavingsGoal = useCallback((goal: Omit<SavingsGoal, "id" | "savedAmount">) => {
     setState((s) => {
-      // Distribute existing savingsBalance to the new goal up to its target
       const existingAllocated = s.savingsGoals.reduce((sum, g) => sum + g.savedAmount, 0);
       const unallocated = Math.max(0, s.savingsBalance - existingAllocated);
       const seedAmount = Math.min(unallocated, goal.targetAmount);
-      return {
-        ...s,
-        savingsGoals: [...s.savingsGoals, { ...goal, id: Date.now().toString(), savedAmount: seedAmount }],
-      };
+      return { ...s, savingsGoals: [...s.savingsGoals, { ...goal, id: Date.now().toString(), savedAmount: seedAmount }] };
     });
   }, []);
 
   const editSavingsGoal = useCallback((id: string, updates: Partial<SavingsGoal>) => {
-    setState((s) => ({
-      ...s,
-      savingsGoals: s.savingsGoals.map((g) => g.id === id ? { ...g, ...updates } : g),
-    }));
+    setState((s) => ({ ...s, savingsGoals: s.savingsGoals.map((g) => g.id === id ? { ...g, ...updates } : g) }));
   }, []);
 
   const deleteSavingsGoal = useCallback((id: string) => {
@@ -242,10 +315,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (s.walletBalance < amount) return s;
       const tx: Transaction = {
         id: Date.now().toString(),
-        title: "Moved to Savings",
-        amount: -amount,
-        type: "savings",
-        status: "completed",
+        title: "Moved to Savings", amount: -amount, type: "savings", status: "completed",
         date: new Date().toLocaleDateString("en-NG"),
         goalName: s.savingsGoals.find((g) => g.id === goalId)?.name,
       };
@@ -259,19 +329,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const setBankDetails = useCallback((details: BankDetails) => {
-    setState((s) => ({ ...s, bankDetails: details }));
-  }, []);
+  const setBankDetails = useCallback((details: BankDetails) => setState((s) => ({ ...s, bankDetails: details })), []);
 
   const applyTrustEvent = useCallback((event: keyof typeof TRUST_DELTAS) => {
     setState((s) => ({ ...s, trustScore: Math.max(0, Math.min(100, s.trustScore + TRUST_DELTAS[event])) }));
   }, []);
 
+  const addCommunitySubmission = useCallback((sub: Omit<CommunitySubmission, "id" | "submittedAt" | "status">) => {
+    const id = "cs_" + Date.now();
+    setState((s) => ({
+      ...s,
+      communitySubmissions: [
+        { ...sub, id, status: "Under Review", submittedAt: new Date().toLocaleString("en-NG") },
+        ...s.communitySubmissions,
+      ],
+    }));
+    return id;
+  }, []);
+
+  const setOrgVerification = useCallback((v: OrgVerification | null) => setState((s) => ({ ...s, orgVerification: v })), []);
+
   return (
     <AppContext.Provider value={{
       ...state, login, signup, signupClient, logout, setRole, completeTask, setSavingsPreference,
-      completeProfile, withdraw, addSavingsGoal, editSavingsGoal, deleteSavingsGoal, addMoneyToGoal,
+      completeProfile, saveProfile, submitIdentity, setIdentityStatus, withdraw,
+      addSavingsGoal, editSavingsGoal, deleteSavingsGoal, addMoneyToGoal,
       setBankDetails, processVerifications, applyTrustEvent,
+      addCommunitySubmission, setOrgVerification,
     }}>
       {children}
     </AppContext.Provider>
