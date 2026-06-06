@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ListChecks, Inbox, Wallet, Users, BarChart3, Settings, Bell, Search, LogOut, ChevronDown } from "lucide-react";
+import { LayoutDashboard, ListChecks, Inbox, Wallet, Users, BarChart3, Settings, Bell, Search, LogOut, ChevronDown, FolderKanban } from "lucide-react";
 import { useState } from "react";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { useApp } from "@/context/AppContext";
@@ -7,6 +7,7 @@ import { isAdminEmail } from "@/lib/adminAllowlist";
 
 const navItems = [
   { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/admin/projects", icon: FolderKanban, label: "Project Review" },
   { to: "/admin/tasks", icon: ListChecks, label: "Task Management" },
   { to: "/admin/submissions", icon: Inbox, label: "Submissions" },
   { to: "/admin/payments", icon: Wallet, label: "Payments" },
