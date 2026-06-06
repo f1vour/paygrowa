@@ -5,12 +5,12 @@ import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { useApp } from "@/context/AppContext";
 
 const navItems = [
-  { to: "/client/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/client/projects", icon: FolderKanban, label: "Projects" },
-  { to: "/client/create", icon: Plus, label: "Create Project" },
-  { to: "/client/analytics", icon: BarChart3, label: "Analytics" },
-  { to: "/client/payments", icon: Wallet, label: "Payments" },
-  { to: "/client/profile", icon: User, label: "Profile" },
+  { to: "/organization/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/organization/projects", icon: FolderKanban, label: "Projects" },
+  { to: "/organization/create", icon: Plus, label: "Create Project" },
+  { to: "/organization/analytics", icon: BarChart3, label: "Analytics" },
+  { to: "/organization/payments", icon: Wallet, label: "Payments" },
+  { to: "/organization/profile", icon: User, label: "Profile" },
 ];
 
 export default function ClientLayout() {

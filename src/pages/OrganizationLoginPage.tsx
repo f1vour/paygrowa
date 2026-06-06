@@ -22,7 +22,7 @@ export default function OrganizationLoginPage() {
     if (!valid) return;
     login(email.trim());
     setRole("client");
-    navigate("/client/dashboard");
+    navigate("/organization/dashboard");
   };
 
   return (
@@ -58,7 +58,7 @@ export default function OrganizationLoginPage() {
         <button
           type="button"
           onClick={async () => {
-            const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/client/dashboard" });
+            const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/organization/dashboard" });
             if (res.error) toast({ title: "Google sign-in failed", description: res.error.message, variant: "destructive" });
           }}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-input bg-background text-sm font-medium text-foreground hover:bg-muted tap-scale"

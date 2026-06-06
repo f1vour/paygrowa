@@ -67,7 +67,7 @@ export default function ClientCreateProject() {
       createProject({ ...payload, status } as any);
       toast.success(status === "Draft" ? "Project saved" : "Submitted for review");
     }
-    navigate("/client/projects");
+    navigate("/organization/projects");
   };
 
   return (
