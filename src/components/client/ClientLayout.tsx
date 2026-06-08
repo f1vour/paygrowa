@@ -1,8 +1,9 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, Plus, BarChart3, Wallet, User, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Plus, BarChart3, Wallet, User, LogOut, Menu, X, Building2 } from "lucide-react";
 import { useState } from "react";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { useApp } from "@/context/AppContext";
+import { useClient } from "@/context/ClientContext";
 
 const navItems = [
   { to: "/organization/dashboard", icon: LayoutDashboard, label: "Dashboard" },
