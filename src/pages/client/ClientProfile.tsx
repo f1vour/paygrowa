@@ -1,15 +1,15 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/admin/AdminUi";
-import { useApp, OrgVerification, OrgVerificationStatus } from "@/context/AppContext";
+import { useClient, OrgStatus } from "@/context/ClientContext";
 import { Button } from "@/components/ui/button";
-import { Upload, CheckCircle2, Clock, AlertCircle, ShieldCheck, X } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle, ShieldCheck, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 const ORG_TYPES = ["NGO / Non-Profit", "Government Agency", "Research Institute", "Private Business", "Academic Institution", "Other"];
 const COUNTRIES = ["Nigeria", "Uganda", "Zambia"];
 const DOC_LABELS = ["Certificate of Registration", "NGO Registration Document", "Business Registration", "Government Authorization Letter"];
 
-const statusStyle: Record<OrgVerificationStatus, string> = {
+const statusStyle: Record<OrgStatus, string> = {
   "Not Submitted": "bg-muted text-muted-foreground",
   "Pending Verification": "bg-warning/10 text-warning",
   "Verified Organization": "bg-success/10 text-success",
@@ -17,45 +17,27 @@ const statusStyle: Record<OrgVerificationStatus, string> = {
 };
 
 export default function ClientProfile() {
-  const { user, orgVerification, setOrgVerification } = useApp();
-  const [form, setForm] = useState<OrgVerification>(orgVerification || {
-    organizationName: user?.lastName || "",
-    organizationType: "",
-    contactPerson: user?.firstName || "",
-    email: user?.email || "",
-    phone: "",
-    country: "Nigeria",
-    status: "Not Submitted",
-    documents: [],
-  });
+  const { currentOrg, updateOrgProfile } = useClient();
+  const [form, setForm] = useState(currentOrg);
   const [verifyOpen, setVerifyOpen] = useState(false);
-  const docRefs = DOC_LABELS.map(() => useRef<HTMLInputElement>(null));
-  const [uploads, setUploads] = useState<Record<string, string>>(
-    Object.fromEntries((orgVerification?.documents || []).map((d) => [d.label, d.dataUrl]))
-  );
+  const [uploads, setUploads] = useState<Record<string, boolean>>({});
 
-  const set = (k: keyof OrgVerification) => (v: any) => setForm((f) => ({ ...f, [k]: v }));
+  // Keep form in sync when org switches
+  if (form.id !== currentOrg.id) setForm(currentOrg);
 
-  const saveDetails = () => {
-    setOrgVerification({ ...form, documents: form.documents });
+  const set = (k: keyof typeof form) => (v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const save = () => {
+    updateOrgProfile(form);
     toast.success("Organization details saved");
   };
 
-  const onUpload = (label: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const r = new FileReader();
-    r.onload = () => setUploads((u) => ({ ...u, [label]: r.result as string }));
-    r.readAsDataURL(file);
-    e.target.value = "";
-  };
-
   const submitVerification = () => {
-    const documents = DOC_LABELS.filter((l) => uploads[l]).map((label) => ({ label, dataUrl: uploads[label] }));
-    if (documents.length === 0) { toast.error("Upload at least one document"); return; }
-    const updated: OrgVerification = { ...form, documents, status: "Pending Verification" };
-    setOrgVerification(updated);
-    setForm(updated); setVerifyOpen(false);
+    const count = Object.values(uploads).filter(Boolean).length;
+    if (count === 0) { toast.error("Upload at least one document"); return; }
+    updateOrgProfile({ status: "Pending Verification" });
+    setForm((f) => ({ ...f, status: "Pending Verification" }));
+    setVerifyOpen(false);
     toast.success("Verification submitted for review");
   };
 
@@ -64,18 +46,16 @@ export default function ClientProfile() {
       <PageHeader title="Organization Profile" subtitle="Manage your account and verification" />
 
       <div className="max-w-2xl space-y-4">
-        {/* Verification status banner */}
         {form.status !== "Verified Organization" && (
           <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/5 p-4">
             <ShieldCheck className="mt-0.5 h-5 w-5 text-warning" />
             <div className="flex-1 text-sm">
               <p className="font-semibold text-foreground">Only verified organizations can publish live projects.</p>
-              <p className="text-xs text-muted-foreground">Submit your verification documents to unlock live project publishing.</p>
+              <p className="text-xs text-muted-foreground">Submit verification documents to unlock live project publishing.</p>
             </div>
           </div>
         )}
 
-        {/* Details */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-foreground">Organization Details</h2>
@@ -87,10 +67,9 @@ export default function ClientProfile() {
           <Field label="Email" value={form.email} onChange={set("email")} type="email" />
           <Field label="Phone" value={form.phone} onChange={set("phone")} type="tel" />
           <SelectField label="Country" value={form.country} onChange={set("country")} options={COUNTRIES} />
-          <Button onClick={saveDetails}>Save Changes</Button>
+          <Button onClick={save}>Save Changes</Button>
         </div>
 
-        {/* Verification */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
           <h2 className="text-sm font-bold text-foreground">Verification</h2>
           {form.status === "Not Submitted" && (
@@ -121,23 +100,16 @@ export default function ClientProfile() {
               <h3 className="text-base font-bold text-foreground">Upload Verification Documents</h3>
               <button onClick={() => setVerifyOpen(false)}><X className="h-4 w-4" /></button>
             </div>
-            <p className="mb-3 text-xs text-muted-foreground">Upload any documents that apply to your organization.</p>
             <div className="space-y-3">
-              {DOC_LABELS.map((label, i) => (
+              {DOC_LABELS.map((label) => (
                 <div key={label} className="rounded-xl border border-border bg-background p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium text-foreground">{label}</p>
-                    {uploads[label] ? <span className="text-xs text-success">Uploaded ✓</span> : null}
+                    {uploads[label] && <span className="text-xs text-success">Uploaded ✓</span>}
                   </div>
-                  <div className="mt-2 flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => docRefs[i].current?.click()}>
-                      <Upload className="h-3 w-3" /> {uploads[label] ? "Replace" : "Upload"}
-                    </Button>
-                    {uploads[label] && (
-                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setUploads((u) => { const n = { ...u }; delete n[label]; return n; })}>Remove</Button>
-                    )}
-                  </div>
-                  <input ref={docRefs[i]} type="file" accept="image/*,application/pdf" className="hidden" onChange={onUpload(label)} />
+                  <Button size="sm" variant="outline" className="mt-2" onClick={() => setUploads((u) => ({ ...u, [label]: true }))}>
+                    <Upload className="h-3 w-3" /> {uploads[label] ? "Replace" : "Upload"}
+                  </Button>
                 </div>
               ))}
             </div>
@@ -153,8 +125,7 @@ function Field({ label, value, onChange, type = "text" }: { label: string; value
   return (
     <div>
       <label className="mb-1 block text-xs font-medium text-foreground">{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" />
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" />
     </div>
   );
 }

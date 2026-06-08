@@ -1,8 +1,9 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, Plus, BarChart3, Wallet, User, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Plus, BarChart3, Wallet, User, LogOut, Menu, X, Building2 } from "lucide-react";
 import { useState } from "react";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { useApp } from "@/context/AppContext";
+import { useClient } from "@/context/ClientContext";
 
 const navItems = [
   { to: "/organization/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -16,16 +17,28 @@ const navItems = [
 export default function ClientLayout() {
   const navigate = useNavigate();
   const { user, logout } = useApp();
+  const { organizations, currentOrgId, setCurrentOrgId, currentOrg } = useClient();
   const [open, setOpen] = useState(false);
+
+  const OrgSwitcher = ({ className = "" }: { className?: string }) => (
+    <div className={`flex items-center gap-2 rounded-lg border border-border bg-background px-2 py-1.5 ${className}`}>
+      <Building2 className="h-4 w-4 text-muted-foreground" />
+      <select value={currentOrgId} onChange={(e) => setCurrentOrgId(e.target.value)}
+        className="bg-transparent text-xs font-medium text-foreground focus:outline-none">
+        {organizations.map((o) => <option key={o.id} value={o.id}>{o.organizationName}</option>)}
+      </select>
+    </div>
+  );
 
   const handleLogout = () => { logout(); navigate("/organization/login"); };
 
   return (
     <div className="flex min-h-screen bg-muted/30">
       <aside className="hidden md:flex w-60 flex-col border-r border-border bg-card">
-        <div className="border-b border-border px-5 py-4">
+        <div className="border-b border-border px-5 py-4 space-y-2">
           <PayGrowaLogo size="md" clickable={false} />
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Organization Portal</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Organization Portal</p>
+          <OrgSwitcher />
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {navItems.map(({ to, icon: Icon, label }) => (
@@ -48,10 +61,13 @@ export default function ClientLayout() {
             <button onClick={() => setOpen(true)} aria-label="Menu" className="rounded-lg border border-border p-2"><Menu className="h-5 w-5" /></button>
             <PayGrowaLogo size="sm" clickable={false} />
           </div>
-          <div className="hidden md:block" />
-          <div className="text-xs text-muted-foreground hidden md:block">
-            {user?.lastName /* org name */} · {user?.email}
+          <div className="hidden md:flex items-center gap-3">
+            <OrgSwitcher />
           </div>
+          <div className="text-xs text-muted-foreground hidden md:block">
+            {currentOrg.organizationName} · {currentOrg.contactPerson}
+          </div>
+          <div className="md:hidden"><OrgSwitcher /></div>
         </header>
 
         {open && (
