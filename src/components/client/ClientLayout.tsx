@@ -17,7 +17,18 @@ const navItems = [
 export default function ClientLayout() {
   const navigate = useNavigate();
   const { user, logout } = useApp();
+  const { organizations, currentOrgId, setCurrentOrgId, currentOrg } = useClient();
   const [open, setOpen] = useState(false);
+
+  const OrgSwitcher = ({ className = "" }: { className?: string }) => (
+    <div className={`flex items-center gap-2 rounded-lg border border-border bg-background px-2 py-1.5 ${className}`}>
+      <Building2 className="h-4 w-4 text-muted-foreground" />
+      <select value={currentOrgId} onChange={(e) => setCurrentOrgId(e.target.value)}
+        className="bg-transparent text-xs font-medium text-foreground focus:outline-none">
+        {organizations.map((o) => <option key={o.id} value={o.id}>{o.organizationName}</option>)}
+      </select>
+    </div>
+  );
 
   const handleLogout = () => { logout(); navigate("/organization/login"); };
 
