@@ -35,9 +35,10 @@ export default function ClientLayout() {
   return (
     <div className="flex min-h-screen bg-muted/30">
       <aside className="hidden md:flex w-60 flex-col border-r border-border bg-card">
-        <div className="border-b border-border px-5 py-4">
+        <div className="border-b border-border px-5 py-4 space-y-2">
           <PayGrowaLogo size="md" clickable={false} />
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Organization Portal</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Organization Portal</p>
+          <OrgSwitcher />
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
           {navItems.map(({ to, icon: Icon, label }) => (
