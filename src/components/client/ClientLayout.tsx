@@ -61,10 +61,13 @@ export default function ClientLayout() {
             <button onClick={() => setOpen(true)} aria-label="Menu" className="rounded-lg border border-border p-2"><Menu className="h-5 w-5" /></button>
             <PayGrowaLogo size="sm" clickable={false} />
           </div>
-          <div className="hidden md:block" />
-          <div className="text-xs text-muted-foreground hidden md:block">
-            {user?.lastName /* org name */} · {user?.email}
+          <div className="hidden md:flex items-center gap-3">
+            <OrgSwitcher />
           </div>
+          <div className="text-xs text-muted-foreground hidden md:block">
+            {currentOrg.organizationName} · {currentOrg.contactPerson}
+          </div>
+          <div className="md:hidden"><OrgSwitcher /></div>
         </header>
 
         {open && (
