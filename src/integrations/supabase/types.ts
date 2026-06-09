@@ -331,6 +331,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projects: {
@@ -523,7 +530,74 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      projects_public: {
+        Row: {
+          age_range: string | null
+          country: string | null
+          created_at: string | null
+          deadline: string | null
+          description: string | null
+          estimated_minutes: number | null
+          gender: string | null
+          id: string | null
+          language: string | null
+          objective: string | null
+          organization_id: string | null
+          responses_required: number | null
+          reward_per_response: number | null
+          state: string | null
+          status: Database["public"]["Enums"]["project_status"] | null
+          title: string | null
+          type: Database["public"]["Enums"]["project_type"] | null
+        }
+        Insert: {
+          age_range?: string | null
+          country?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          gender?: string | null
+          id?: string | null
+          language?: string | null
+          objective?: string | null
+          organization_id?: string | null
+          responses_required?: number | null
+          reward_per_response?: number | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["project_status"] | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["project_type"] | null
+        }
+        Update: {
+          age_range?: string | null
+          country?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          description?: string | null
+          estimated_minutes?: number | null
+          gender?: string | null
+          id?: string | null
+          language?: string | null
+          objective?: string | null
+          organization_id?: string | null
+          responses_required?: number | null
+          reward_per_response?: number | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["project_status"] | null
+          title?: string | null
+          type?: Database["public"]["Enums"]["project_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
