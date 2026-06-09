@@ -132,6 +132,7 @@ interface AppState {
 }
 
 interface AppContextType extends AppState {
+  refresh: () => Promise<void>;
   logout: () => Promise<void>;
   setRole: (role: UserRole) => void;
   // Backwards-compat (no-op now that auth is real, kept so older pages keep compiling)
