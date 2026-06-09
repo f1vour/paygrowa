@@ -2,27 +2,32 @@ import { useState } from "react";
 import { Eye, EyeOff, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import { isAdminEmail } from "@/lib/adminAllowlist";
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import GoogleIcon from "@/components/GoogleIcon";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useApp();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const valid = email.includes("@") && password.length >= 8;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!valid) return;
+    if (!valid || submitting) return;
+    setSubmitting(true);
     const trimmed = email.trim();
-    login(trimmed);
+    const { error } = await supabase.auth.signInWithPassword({ email: trimmed, password });
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
+      return;
+    }
     navigate(isAdminEmail(trimmed) ? "/admin/dashboard" : "/dashboard");
   };
 
@@ -79,8 +84,11 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={async () => {
-            const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
-            if (res.error) toast({ title: "Google sign-in failed", description: res.error.message, variant: "destructive" });
+            const { error } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: { redirectTo: `${window.location.origin}/dashboard` },
+            });
+            if (error) toast({ title: "Google sign-in failed", description: error.message, variant: "destructive" });
           }}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-input bg-background text-sm font-medium text-foreground hover:bg-muted tap-scale"
         >
