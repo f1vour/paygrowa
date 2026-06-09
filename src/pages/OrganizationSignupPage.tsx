@@ -78,6 +78,7 @@ export default function OrganizationSignupPage() {
     });
     // Promote this user to the "client" role
     await supabase.from("user_roles").insert({ user_id: signUpData.user.id, role: "client" as any });
+    await refresh();
     setSubmitting(false);
     navigate("/organization/dashboard");
   };
