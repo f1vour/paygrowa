@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import orgHero from "@/assets/org-hero.jpg";
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import GoogleIcon from "@/components/GoogleIcon";
 
@@ -15,13 +14,13 @@ const STATES = ["Lagos", "Abuja (FCT)", "Rivers", "Kano", "Oyo", "Anambra", "Kad
 
 export default function OrganizationSignupPage() {
   const navigate = useNavigate();
-  const { signupClient } = useApp();
   const [form, setForm] = useState({
     orgName: "", orgType: "", contactName: "", email: "", phone: "",
     country: "Nigeria", state: "", password: "", confirmPassword: "",
   });
   const [agreed, setAgreed] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -31,10 +30,53 @@ export default function OrganizationSignupPage() {
     form.phone && form.country && form.state && form.password.length >= 8 &&
     form.password === form.confirmPassword && agreed;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!valid) return;
-    signupClient(form.orgName.trim(), form.contactName.trim(), form.email.trim());
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    const [firstName, ...rest] = form.contactName.trim().split(/\s+/);
+    const lastName = rest.join(" ");
+    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+      email: form.email.trim(),
+      password: form.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/organization/dashboard`,
+        data: { first_name: firstName, last_name: lastName, role: "client" },
+      },
+    });
+    if (signUpErr || !signUpData.user) {
+      setSubmitting(false);
+      toast({ title: "Sign up failed", description: signUpErr?.message || "Unknown error", variant: "destructive" });
+      return;
+    }
+    // The handle_new_user trigger inserts profile + user_roles. The session is established
+    // immediately because auto-confirm is on. Now create the org + membership.
+    const { data: orgRow, error: orgErr } = await supabase
+      .from("organizations")
+      .insert({
+        name: form.orgName.trim(),
+        org_type: form.orgType,
+        contact_person: form.contactName.trim(),
+        email: form.email.trim(),
+        phone: form.phone,
+        country: form.country,
+        created_by: signUpData.user.id,
+      })
+      .select("id")
+      .single();
+    if (orgErr || !orgRow) {
+      setSubmitting(false);
+      toast({ title: "Org create failed", description: orgErr?.message, variant: "destructive" });
+      return;
+    }
+    await supabase.from("organization_members").insert({
+      organization_id: orgRow.id,
+      user_id: signUpData.user.id,
+      role: "owner" as any,
+    });
+    // Promote this user to the "client" role
+    await supabase.from("user_roles").insert({ user_id: signUpData.user.id, role: "client" as any });
+    setSubmitting(false);
     navigate("/organization/dashboard");
   };
 
