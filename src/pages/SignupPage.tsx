@@ -2,20 +2,20 @@ import { useState, useMemo } from "react";
 import { Lock, CheckCircle, Banknote, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useApp } from "@/context/AppContext";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
 import signupHero from "@/assets/signup-hero.jpg";
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import GoogleIcon from "@/components/GoogleIcon";
+import { isAdminEmail } from "@/lib/adminAllowlist";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const { signup } = useApp();
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirmPassword: "" });
   const [agreed, setAgreed] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const pwChecks = useMemo(() => ({
     length: form.password.length >= 8,
@@ -28,11 +28,29 @@ export default function SignupPage() {
   const passwordsMatch = form.password === form.confirmPassword && form.confirmPassword.length > 0;
   const formValid = form.firstName.trim() && form.lastName.trim() && form.email.includes("@") && allPwValid && passwordsMatch && agreed;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formValid) return;
-    signup(form.firstName.trim(), form.lastName.trim(), form.email.trim());
-    navigate("/dashboard");
+    if (!formValid || submitting) return;
+    setSubmitting(true);
+    const email = form.email.trim();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password: form.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          first_name: form.firstName.trim(),
+          last_name: form.lastName.trim(),
+          role: "contributor",
+        },
+      },
+    });
+    setSubmitting(false);
+    if (error) {
+      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+      return;
+    }
+    navigate(isAdminEmail(email) ? "/admin/dashboard" : "/dashboard");
   };
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
