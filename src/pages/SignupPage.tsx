@@ -151,8 +151,11 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={async () => {
-                const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
-                if (res.error) toast({ title: "Google sign-up failed", description: res.error.message, variant: "destructive" });
+                const { error } = await supabase.auth.signInWithOAuth({
+                  provider: "google",
+                  options: { redirectTo: `${window.location.origin}/dashboard` },
+                });
+                if (error) toast({ title: "Google sign-up failed", description: error.message, variant: "destructive" });
               }}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-input bg-background text-sm font-medium text-foreground hover:bg-muted tap-scale"
             >
