@@ -13,7 +13,8 @@ const ORG_TYPES = ["NGO", "Government Agency", "University", "Research Organizat
 const COUNTRIES = ["Nigeria", "Ghana", "Kenya", "South Africa", "Other"];
 const STATES = ["Lagos", "Abuja (FCT)", "Rivers", "Kano", "Oyo", "Anambra", "Kaduna", "Enugu", "Other"];
 
-const { refresh } = useApp();
+export default function OrganizationSignupPage() {
+  const { refresh } = useApp();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     orgName: "", orgType: "", contactName: "", email: "", phone: "",
