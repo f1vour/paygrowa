@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PayGrowaLogo from "@/components/PayGrowaLogo";
