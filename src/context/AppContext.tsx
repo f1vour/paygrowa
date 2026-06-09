@@ -509,9 +509,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setOrgVerification = useCallback((v: OrgVerification | null) => setState((s) => ({ ...s, orgVerification: v })), []);
 
+  const refresh = useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    await hydrateForUser(data.session);
+  }, [hydrateForUser]);
+
   return (
     <AppContext.Provider value={{
-      ...state, login, signup, signupClient, logout, setRole, completeTask, setSavingsPreference,
+      ...state, refresh, login, signup, signupClient, logout, setRole, completeTask, setSavingsPreference,
       completeProfile, saveProfile, submitIdentity, setIdentityStatus, withdraw,
       addSavingsGoal, editSavingsGoal, deleteSavingsGoal, addMoneyToGoal,
       setBankDetails, processVerifications, applyTrustEvent,
